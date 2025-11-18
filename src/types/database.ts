@@ -50,5 +50,5 @@ export interface ServiceRequest {
 export interface User {
   id: string;
   email: string;
-  user_metadata?: Record<string, any>;
+  user_metadata?: Record<string, string | number | boolean>;
 }

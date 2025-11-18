@@ -95,7 +95,7 @@ export default function ServiceRequestForm() {
     }
   };
 
-  const updateField = (field: keyof ServiceRequest, value: any) => {
+  const updateField = (field: keyof ServiceRequest, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -169,10 +169,11 @@ export default function ServiceRequestForm() {
       }
 
       navigate('/dashboard');
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to save request';
       toast({
         title: 'Error',
-        description: error.message || 'Failed to save request',
+        description: errorMsg,
         variant: 'destructive',
       });
     } finally {

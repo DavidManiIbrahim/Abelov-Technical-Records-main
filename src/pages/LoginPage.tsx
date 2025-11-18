@@ -75,11 +75,12 @@ export default function LoginPage() {
         });
         navigate('/dashboard');
       }
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
+      const errorMsg = error instanceof Error ? error.message : 'Authentication failed';
       console.error('Auth error:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Authentication failed',
+        description: errorMsg,
         variant: 'destructive',
       });
     } finally {
