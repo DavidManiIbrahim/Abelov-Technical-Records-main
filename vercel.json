@@ -5,9 +5,9 @@
     "VITE_SUPABASE_URL": "@vite_supabase_url",
     "VITE_SUPABASE_ANON_KEY": "@vite_supabase_anon_key"
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "^/(?!.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|webp|woff|woff2|ttf|eot)$).*$",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
