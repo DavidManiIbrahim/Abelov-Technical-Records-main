@@ -61,7 +61,6 @@ export default function ServiceRequestForm() {
     payment_completed: false,
     repair_timeline: [],
     customer_confirmation: {
-      signature: '',
       customer_collected: false,
       technician: '',
     },
@@ -128,15 +127,6 @@ export default function ServiceRequestForm() {
   };
 
   const handleSubmit = async () => {
-    if (!formData.customer_name || !formData.customer_phone || !formData.problem_description) {
-      toast({
-        title: 'Missing Required Fields',
-        description: 'Please fill in customer name, phone, and problem description.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
     if (!user?.id) {
       toast({
         title: 'Error',
@@ -200,118 +190,7 @@ export default function ServiceRequestForm() {
   }
 
   const handleNext = () => {
-    // Validate required fields for each step
-    let missingFields: string[] = [];
-
-    switch (currentStep) {
-      case 0: // Shop Information
-        if (!formData.technician_name?.trim()) {
-          missingFields.push('Technician Name');
-        }
-        if (!formData.request_date?.trim()) {
-          missingFields.push('Request Date');
-        }
-        break;
-
-      case 1: // Customer Information
-        if (!formData.customer_name?.trim()) {
-          missingFields.push('Customer Name');
-        }
-        if (!formData.customer_phone?.trim()) {
-          missingFields.push('Customer Phone');
-        }
-        break;
-
-      case 2: // Device Information
-        if (!formData.device_model?.trim()) {
-          missingFields.push('Device Model');
-        }
-        if (!formData.device_brand?.trim()) {
-          missingFields.push('Device Brand');
-        }
-        if (!formData.serial_number?.trim()) {
-          missingFields.push('Serial Number');
-        }
-        if (!formData.operating_system?.trim()) {
-          missingFields.push('Operating System');
-        }
-        break;
-
-      case 3: // Problem Description
-        if (!formData.problem_description?.trim()) {
-          missingFields.push('Problem Description');
-        }
-        break;
-
-      case 4: // Diagnosis & Repair Report
-        if (!formData.diagnosis_date?.trim()) {
-          missingFields.push('Diagnosis Date');
-        }
-        if (!formData.diagnosis_technician?.trim()) {
-          missingFields.push('Diagnosis Technician');
-        }
-        if (!formData.fault_found?.trim()) {
-          missingFields.push('Fault Found');
-        }
-        if (!formData.parts_used?.trim()) {
-          missingFields.push('Parts Used');
-        }
-        if (!formData.repair_action?.trim()) {
-          missingFields.push('Repair Action');
-        }
-        break;
-
-      case 5: // Cost Summary
-        if (!formData.service_charge || formData.service_charge === 0) {
-          missingFields.push('Service Charge');
-        }
-        if (!formData.parts_cost || formData.parts_cost === 0) {
-          missingFields.push('Parts Cost');
-        }
-        if (!formData.deposit_paid || formData.deposit_paid === 0) {
-          missingFields.push('Deposit Paid');
-        }
-        break;
-
-      case 6: // Repair Timeline
-        const validTimelineSteps = timelineSteps.filter((step) => step.step?.trim());
-        if (validTimelineSteps.length === 0) {
-          missingFields.push('At least one Repair Timeline Step');
-        } else {
-          for (let i = 0; i < validTimelineSteps.length; i++) {
-            const step = validTimelineSteps[i];
-            if (!step.date?.trim()) {
-              missingFields.push(`Step ${i + 1} Date`);
-            }
-            if (!step.status?.trim()) {
-              missingFields.push(`Step ${i + 1} Status`);
-            }
-          }
-        }
-        break;
-
-      case 7: // Customer Confirmation
-        if (!formData.customer_confirmation?.signature?.trim()) {
-          missingFields.push('Customer Signature');
-        }
-        if (!formData.customer_confirmation?.technician?.trim()) {
-          missingFields.push('Technician Name');
-        }
-        if (!formData.customer_confirmation?.customer_collected) {
-          missingFields.push('Customer Collection Confirmation');
-        }
-        break;
-    }
-
-    if (missingFields.length > 0) {
-      toast({
-        title: 'Missing Required Fields',
-        description: `Please fill in: ${missingFields.join(', ')}`,
-        variant: 'destructive',
-      });
-      return;
-    }
-
+    // All fields are optional - just proceed to next step
     if (currentStep < FORM_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
       window.scrollTo(0, 0);
@@ -343,12 +222,11 @@ export default function ServiceRequestForm() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
               <div>
-                <Label htmlFor="technician_name">Technician Name *</Label>
+                <Label htmlFor="technician_name">Technician Name</Label>
                 <Input
                   id="technician_name"
                   value={formData.technician_name}
                   onChange={(e) => updateField('technician_name', e.target.value)}
-                  required
                 />
               </div>
               <div>
@@ -369,22 +247,20 @@ export default function ServiceRequestForm() {
             <h2 className="text-2xl font-semibold mb-4 text-primary">Customer Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="customer_name">Customer Name *</Label>
+                <Label htmlFor="customer_name">Customer Name</Label>
                 <Input
                   id="customer_name"
                   value={formData.customer_name}
                   onChange={(e) => updateField('customer_name', e.target.value)}
-                  required
                 />
               </div>
               <div>
-                <Label htmlFor="customer_phone">Customer Phone *</Label>
+                <Label htmlFor="customer_phone">Customer Phone</Label>
                 <Input
                   id="customer_phone"
                   type="tel"
                   value={formData.customer_phone}
                   onChange={(e) => updateField('customer_phone', e.target.value)}
-                  required
                 />
               </div>
               <div className="md:col-span-2">
@@ -460,13 +336,12 @@ export default function ServiceRequestForm() {
         return (
           <Card className="p-6">
             <h2 className="text-2xl font-semibold mb-4 text-primary">Problem Description</h2>
-            <Label htmlFor="problem_description">Problem Description *</Label>
+            <Label htmlFor="problem_description">Problem Description</Label>
             <Textarea
               id="problem_description"
               value={formData.problem_description}
               onChange={(e) => updateField('problem_description', e.target.value)}
               className="min-h-32"
-              required
             />
           </Card>
         );
@@ -694,20 +569,6 @@ export default function ServiceRequestForm() {
           <Card className="p-6">
             <h2 className="text-2xl font-semibold mb-4 text-primary">Customer Confirmation</h2>
             <div className="space-y-4">
-              <div>
-                <Label htmlFor="signature">Signature</Label>
-                <Input
-                  id="signature"
-                  value={formData.customer_confirmation?.signature}
-                  onChange={(e) =>
-                    updateField('customer_confirmation', {
-                      ...formData.customer_confirmation,
-                      signature: e.target.value,
-                    })
-                  }
-                  placeholder="Customer signature"
-                />
-              </div>
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="customer_collected"

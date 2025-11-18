@@ -270,7 +270,7 @@ export default function ServiceRequestViewPage() {
           <h2 className="text-2xl font-semibold mb-4 text-primary">Customer Confirmation</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <DetailRow label="Signature" value={request.customer_confirmation.signature} />
+              {/* Signature removed per request */}
             </div>
             <div>
               <DetailRow label="Device Collected" value={request.customer_confirmation.customer_collected} />

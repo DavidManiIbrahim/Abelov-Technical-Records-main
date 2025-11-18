@@ -9,7 +9,6 @@ export interface RepairTimelineStep {
 }
 
 export interface CustomerConfirmation {
-  signature: string;
   customer_collected: boolean;
   technician: string;
 }
