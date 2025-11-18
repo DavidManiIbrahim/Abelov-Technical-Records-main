@@ -119,13 +119,19 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button onClick={() => navigate('/analytics')} variant="outline">
+            <Button onClick={() => navigate('/analytics')} variant="outline" className="md:flex hidden">
               <BarChart3 className="w-4 h-4 mr-2" />
               Analytics
             </Button>
-            <Button onClick={handleLogout} variant="destructive">
+            <Button onClick={() => navigate('/analytics')} variant="outline" className="md:hidden">
+              <BarChart3 className="w-4 h-4" />
+            </Button>
+            <Button onClick={handleLogout} variant="destructive" className="md:flex hidden">
               <LogOut className="w-4 h-4 mr-2" />
               Logout
+            </Button>
+            <Button onClick={handleLogout} variant="destructive" className="md:hidden">
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -154,9 +160,12 @@ export default function DashboardPage() {
               className="pl-10"
             />
           </div>
-          <Button onClick={() => navigate('/')} size="lg">
+          <Button onClick={() => navigate('/')} size="lg" className="md:flex hidden">
             <Plus className="w-4 h-4 mr-2" />
             New Request
+          </Button>
+          <Button onClick={() => navigate('/')} size="lg" className="md:hidden">
+            <Plus className="w-4 h-4" />
           </Button>
         </div>
 
@@ -217,19 +226,35 @@ export default function DashboardPage() {
                     onClick={() => navigate(`/view/${request.id}`)}
                     variant="outline"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 md:flex hidden"
                   >
                     <Eye className="w-3 h-3 mr-1" />
                     View
                   </Button>
                   <Button
+                    onClick={() => navigate(`/view/${request.id}`)}
+                    variant="outline"
+                    size="sm"
+                    className="md:hidden"
+                  >
+                    <Eye className="w-3 h-3" />
+                  </Button>
+                  <Button
                     onClick={() => navigate(`/edit/${request.id}`)}
                     variant="default"
                     size="sm"
-                    className="flex-1"
+                    className="flex-1 md:flex hidden"
                   >
                     <Edit className="w-3 h-3 mr-1" />
                     Edit
+                  </Button>
+                  <Button
+                    onClick={() => navigate(`/edit/${request.id}`)}
+                    variant="default"
+                    size="sm"
+                    className="md:hidden"
+                  >
+                    <Edit className="w-3 h-3" />
                   </Button>
                   <Button
                     onClick={() => handleDelete(request.id)}

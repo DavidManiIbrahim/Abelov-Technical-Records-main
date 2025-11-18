@@ -121,17 +121,26 @@ export default function ServiceRequestViewPage() {
             <p className="text-muted-foreground">Request ID: {request.id}</p>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handlePrint} variant="outline">
+            <Button onClick={handlePrint} variant="outline" className="md:flex hidden">
               <Printer className="w-4 h-4 mr-2" />
               Print
             </Button>
-            <Button onClick={() => navigate(`/edit/${request.id}`)} variant="outline">
+            <Button onClick={handlePrint} variant="outline" className="md:hidden">
+              <Printer className="w-4 h-4" />
+            </Button>
+            <Button onClick={() => navigate(`/edit/${request.id}`)} variant="outline" className="md:flex hidden">
               <Edit className="w-4 h-4 mr-2" />
               Edit
             </Button>
-            <Button onClick={() => navigate('/dashboard')} variant="outline">
+            <Button onClick={() => navigate(`/edit/${request.id}`)} variant="outline" className="md:hidden">
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button onClick={() => navigate('/dashboard')} variant="outline" className="md:flex hidden">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
+            </Button>
+            <Button onClick={() => navigate('/dashboard')} variant="outline" className="md:hidden">
+              <ArrowLeft className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -332,13 +341,19 @@ export default function ServiceRequestViewPage() {
 
         {/* Action Buttons - Hide on Print */}
         <div className="print-hide flex gap-4 mt-8">
-          <Button onClick={() => navigate(`/edit/${request.id}`)} className="flex-1">
+          <Button onClick={() => navigate(`/edit/${request.id}`)} className="flex-1 md:flex hidden">
             <Edit className="w-4 h-4 mr-2" />
             Edit Request
           </Button>
-          <Button onClick={() => navigate('/dashboard')} variant="outline" className="flex-1">
+          <Button onClick={() => navigate(`/edit/${request.id}`)} className="md:hidden">
+            <Edit className="w-4 h-4" />
+          </Button>
+          <Button onClick={() => navigate('/dashboard')} variant="outline" className="flex-1 md:flex hidden">
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
+          </Button>
+          <Button onClick={() => navigate('/dashboard')} variant="outline" className="md:hidden">
+            <ArrowLeft className="w-4 h-4" />
           </Button>
         </div>
       </div>

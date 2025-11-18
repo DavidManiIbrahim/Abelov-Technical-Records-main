@@ -614,13 +614,19 @@ export default function ServiceRequestForm() {
             <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => navigate('/dashboard')}>
+            <Button variant="outline" onClick={() => navigate('/dashboard')} className="md:flex hidden">
               <Home className="w-4 h-4 mr-2" />
               Home
             </Button>
-            <Button variant="outline" onClick={handleLogout}>
+            <Button variant="outline" onClick={() => navigate('/dashboard')} className="md:hidden">
+              <Home className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" onClick={handleLogout} className="md:flex hidden">
               <LogOut className="w-4 h-4 mr-2" />
               Logout
+            </Button>
+            <Button variant="outline" onClick={handleLogout} className="md:hidden">
+              <LogOut className="w-4 h-4" />
             </Button>
           </div>
         </div>
