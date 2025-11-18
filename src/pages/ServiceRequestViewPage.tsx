@@ -218,7 +218,7 @@ export default function ServiceRequestViewPage() {
 
             {/* Diagnosis & Repair */}
             {(request.fault_found || request.parts_used || request.repair_action) && (
-              <div className="mb-6 pb-6 border-b print-section-break">
+              <div className="print-hide mb-6 pb-6 border-b print-section-break">
                 <h3 className="text-lg font-semibold mb-3 text-primary">Diagnosis & Repair</h3>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   {request.diagnosis_date && (
@@ -254,7 +254,7 @@ export default function ServiceRequestViewPage() {
             )}
 
             {/* Cost Summary */}
-            <div className="mb-6 pb-6 border-b print-section-break">
+            <div className="print-hide mb-6 pb-6 border-b print-section-break">
               <h3 className="text-lg font-semibold mb-3 text-primary">Costs</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 <div>
@@ -280,7 +280,7 @@ export default function ServiceRequestViewPage() {
 
             {/* Timeline */}
             {request.repair_timeline.length > 0 && (
-              <div className="mb-6 pb-6 border-b print-section-break">
+              <div className="print-hide mb-6 pb-6 border-b print-section-break">
                 <h3 className="text-lg font-semibold mb-3 text-primary">Timeline</h3>
                 <div className="space-y-3">
                   {request.repair_timeline.map((step, index) => (
@@ -310,7 +310,7 @@ export default function ServiceRequestViewPage() {
             )}
 
             {/* Customer Confirmation */}
-            <div className="pb-6 print-section-break">
+            <div className="print-hide pb-6 print-section-break">
               <h3 className="text-lg font-semibold mb-3 text-primary">Confirmation</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div>
