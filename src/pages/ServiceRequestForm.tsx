@@ -153,15 +153,28 @@ export default function ServiceRequestForm() {
           description: `Service request ${id} has been updated.`,
         });
       } else {
-        const newRequest = {
-          ...formData,
+        // For new requests we only submit the core fields (stop at Problem Description).
+        const newRequest: Partial<ServiceRequest> = {
           user_id: user.id,
           id: `SR-${Date.now()}`,
-          repair_timeline: filteredTimeline,
+          technician_name: formData.technician_name || '',
+          request_date: formData.request_date || new Date().toISOString().split('T')[0],
+          customer_name: formData.customer_name || '',
+          customer_phone: formData.customer_phone || '',
+          customer_address: formData.customer_address || '',
+          device_model: formData.device_model || 'Laptop',
+          device_brand: formData.device_brand || '',
+          serial_number: formData.serial_number || '',
+          operating_system: formData.operating_system || '',
+          accessories_received: formData.accessories_received || '',
+          problem_description: formData.problem_description || '',
+          status: (formData.status as any) || 'Pending',
+          // Explicitly omit diagnosis/repair/costs/timeline/confirmation for initial create
+          repair_timeline: [],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         } as ServiceRequest;
-        await serviceRequestAPI.create(newRequest);
+        await serviceRequestAPI.create(newRequest as any);
         toast({
           title: 'Success!',
           description: `Service request ${newRequest.id} has been created.`,
@@ -191,6 +204,12 @@ export default function ServiceRequestForm() {
   }
 
   const handleNext = () => {
+    // For new requests, stop at Problem Description (index 3) and submit.
+    if (!isEditMode && currentStep === 3) {
+      handleSubmit();
+      return;
+    }
+
     // All fields are optional - just proceed to next step
     if (currentStep < FORM_STEPS.length - 1) {
       setCurrentStep(currentStep + 1);
@@ -674,7 +693,15 @@ export default function ServiceRequestForm() {
                 </Button>
               </div>
               <Button
-                onClick={currentStep === FORM_STEPS.length - 1 ? handleSubmit : handleNext}
+                onClick={() => {
+                  if (!isEditMode && currentStep === 3) {
+                    handleSubmit();
+                  } else if (currentStep === FORM_STEPS.length - 1) {
+                    handleSubmit();
+                  } else {
+                    handleNext();
+                  }
+                }}
                 size="lg"
                 disabled={submitting}
               >
@@ -683,6 +710,8 @@ export default function ServiceRequestForm() {
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     {isEditMode ? 'Updating...' : 'Submitting...'}
                   </>
+                ) : !isEditMode && currentStep === 3 ? (
+                  'Submit Request'
                 ) : currentStep === FORM_STEPS.length - 1 ? (
                   isEditMode ? 'Update & Submit' : 'Submit to Supabase'
                 ) : (

@@ -8,6 +8,16 @@ import { ServiceRequest } from '@/types/database';
 import { ArrowLeft, Loader2, Printer, Edit } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 
+function escapeHtml(unsafe: string) {
+  return unsafe
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;')
+    .replaceAll('\n', '<br/>');
+}
+
 export default function ServiceRequestViewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -82,6 +92,44 @@ export default function ServiceRequestViewPage() {
     window.print();
   };
 
+  const handlePrintXPrinter = () => {
+    if (!request) return;
+    try {
+      const content = `<!doctype html><html><head><meta charset="utf-8"><title>Service Request ${request.id}</title><style>
+        body{font-family: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; margin:0; padding:12px; background:#fff}
+        .container{width:500px; max-width:500px}
+        h1{font-size:18px;margin:0 0 8px}
+        .muted{color:#6b7280;font-size:12px;margin-bottom:8px}
+        .problem{white-space:pre-wrap;font-size:14px;line-height:1.4}
+      </style></head><body><div class="container">
+      <h1>Service Request ${request.id}</h1>
+      <div class="muted">Problem Description</div>
+      <div class="problem">${escapeHtml(request.problem_description || '')}</div>
+    </div></body></html>`;
+
+      const win = window.open('', '_blank', 'noopener,noreferrer');
+      if (!win) {
+        toast({ title: 'Error', description: 'Unable to open print window', variant: 'destructive' });
+        return;
+      }
+      win.document.open();
+      win.document.write(content);
+      win.document.close();
+      setTimeout(() => {
+        try {
+          win.focus();
+          win.print();
+        } catch (err) {
+          console.error('Print error', err);
+          toast({ title: 'Error', description: 'Failed to print', variant: 'destructive' });
+        }
+      }, 250);
+    } catch (err) {
+      console.error(err);
+      toast({ title: 'Error', description: 'Failed to prepare XPrinter print', variant: 'destructive' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <style>{`
@@ -125,7 +173,14 @@ export default function ServiceRequestViewPage() {
               <Printer className="w-4 h-4 mr-2" />
               Print
             </Button>
+            <Button onClick={handlePrintXPrinter} variant="outline" className="md:flex hidden">
+              <Printer className="w-4 h-4 mr-2" />
+              Print (XPrinter)
+            </Button>
             <Button onClick={handlePrint} variant="outline" className="md:hidden">
+              <Printer className="w-4 h-4" />
+            </Button>
+            <Button onClick={handlePrintXPrinter} variant="outline" className="md:hidden">
               <Printer className="w-4 h-4" />
             </Button>
             <Button onClick={() => navigate(`/edit/${request.id}`)} variant="outline" className="md:flex hidden">
