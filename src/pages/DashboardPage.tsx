@@ -7,12 +7,12 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { serviceRequestAPI } from '@/lib/api';
 import { ServiceRequest } from '@/types/database';
-import { Plus, LogOut, Search, Edit, Eye, Trash2, BarChart3 } from 'lucide-react';
+import { Plus, LogOut, Search, Edit, Eye, Trash2, BarChart3, Shield } from 'lucide-react';
 import abelovLogo from '@/assets/abelov-logo.png';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<ServiceRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -126,6 +126,17 @@ export default function DashboardPage() {
             <Button onClick={() => navigate('/analytics')} variant="outline" className="md:hidden">
               <BarChart3 className="w-4 h-4" />
             </Button>
+            {isAdmin && (
+              <>
+                <Button onClick={() => navigate('/admin')} variant="outline" className="md:flex hidden">
+                  <Shield className="w-4 h-4 mr-2" />
+                  Admin Panel
+                </Button>
+                <Button onClick={() => navigate('/admin')} variant="outline" className="md:hidden">
+                  <Shield className="w-4 h-4" />
+                </Button>
+              </>
+            )}
             <Button onClick={handleLogout} variant="destructive" className="md:flex hidden">
               <LogOut className="w-4 h-4 mr-2" />
               Logout

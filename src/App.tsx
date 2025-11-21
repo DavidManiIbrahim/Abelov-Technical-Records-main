@@ -5,11 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import AdminProtectedRoute from "@/components/AdminProtectedRoute";
 import LoginPage from "@/pages/LoginPage";
 import ServiceRequestForm from "@/pages/ServiceRequestForm";
 import ServiceRequestViewPage from "@/pages/ServiceRequestViewPage";
 import DashboardPage from "@/pages/DashboardPage";
 import AnalyticsDashboard from "@/pages/AnalyticsDashboard";
+import AdminDashboard from "@/pages/AdminDashboard";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -61,6 +63,14 @@ const App = () => (
                 <ProtectedRoute>
                   <AnalyticsDashboard />
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AdminProtectedRoute>
+                  <AdminDashboard />
+                </AdminProtectedRoute>
               }
             />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

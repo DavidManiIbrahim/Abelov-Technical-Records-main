@@ -168,13 +168,13 @@ export default function ServiceRequestForm() {
           operating_system: formData.operating_system || '',
           accessories_received: formData.accessories_received || '',
           problem_description: formData.problem_description || '',
-          status: (formData.status as any) || 'Pending',
+          status: (formData.status as string) || 'Pending',
           // Explicitly omit diagnosis/repair/costs/timeline/confirmation for initial create
           repair_timeline: [],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         } as ServiceRequest;
-        await serviceRequestAPI.create(newRequest as any);
+        await serviceRequestAPI.create(newRequest as unknown as Omit<ServiceRequest, 'id' | 'created_at' | 'updated_at'>);
         toast({
           title: 'Success!',
           description: `Service request ${newRequest.id} has been created.`,

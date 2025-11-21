@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { Loader2 } from 'lucide-react';
@@ -15,6 +16,7 @@ export default function LoginPage() {
   const { signIn, signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [userType, setUserType] = useState<'user' | 'admin'>('user');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -52,9 +54,10 @@ export default function LoginPage() {
         await signUp(formData.email, formData.password);
         toast({
           title: 'Success',
-          description: 'Account created! You can now log in.',
+          description: `Account created as ${userType}! You can now log in. ${userType === 'admin' ? 'Please use ADMIN_ACCOUNT_SETUP.sql to complete admin setup.' : ''}`,
         });
         setIsSignUp(false);
+        setUserType('user');
         setFormData({ email: '', password: '', confirmPassword: '' });
       } else {
         // Validate fields
@@ -129,17 +132,38 @@ export default function LoginPage() {
           </div>
 
           {isSignUp && (
-            <div>
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                required
-              />
-            </div>
+            <>
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <Label className="text-base font-semibold mb-3 block">Account Type</Label>
+                <RadioGroup value={userType} onValueChange={(val) => setUserType(val as 'user' | 'admin')}>
+                  <div className="flex items-center space-x-2 mb-3">
+                    <RadioGroupItem value="user" id="user-type" />
+                    <Label htmlFor="user-type" className="font-normal cursor-pointer">
+                      <span className="font-semibold">Regular User (Technician)</span>
+                      <p className="text-xs text-muted-foreground mt-1">Manage your own service requests and tickets</p>
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="admin" id="admin-type" />
+                    <Label htmlFor="admin-type" className="font-normal cursor-pointer">
+                      <span className="font-semibold">Admin</span>
+                      <p className="text-xs text-muted-foreground mt-1">Monitor all users and tickets in the system</p>
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="••••••••"
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  required
+                />
+              </div>
+            </>
           )}
 
           <Button type="submit" className="w-full" disabled={isLoading}>
@@ -159,6 +183,7 @@ export default function LoginPage() {
             type="button"
             onClick={() => {
               setIsSignUp(!isSignUp);
+              setUserType('user');
               setFormData({ email: '', password: '', confirmPassword: '' });
             }}
             className="w-full text-sm text-primary hover:underline"
