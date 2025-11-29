@@ -13,9 +13,46 @@ type StoredUser = {
   created_at?: string;
 };
 
+function normalizeRequest(r: any): ServiceRequest {
+  return {
+    id: r.id,
+    user_id: r.user_id,
+    shop_name: r.shop_name || '',
+    technician_name: r.technician_name || '',
+    request_date: r.request_date || new Date().toISOString().split('T')[0],
+    customer_name: r.customer_name || '',
+    customer_phone: r.customer_phone || '',
+    customer_email: r.customer_email || '',
+    customer_address: r.customer_address || '',
+    device_model: r.device_model || 'Laptop',
+    device_brand: r.device_brand || '',
+    serial_number: r.serial_number || '',
+    operating_system: r.operating_system || '',
+    accessories_received: r.accessories_received || '',
+    problem_description: r.problem_description || '',
+    diagnosis_date: r.diagnosis_date || '',
+    diagnosis_technician: r.diagnosis_technician || '',
+    fault_found: r.fault_found || '',
+    parts_used: r.parts_used || '',
+    repair_action: r.repair_action || '',
+    status: r.status || 'Pending',
+    service_charge: Number(r.service_charge || 0),
+    parts_cost: Number(r.parts_cost || 0),
+    total_cost: Number(r.total_cost || 0),
+    deposit_paid: Number(r.deposit_paid || 0),
+    balance: Number(r.balance || 0),
+    payment_completed: Boolean(r.payment_completed || false),
+    repair_timeline: Array.isArray(r.repair_timeline) ? r.repair_timeline : [],
+    customer_confirmation: r.customer_confirmation || { customer_collected: false, technician: '' },
+    created_at: r.created_at || new Date().toISOString(),
+    updated_at: r.updated_at || r.created_at || new Date().toISOString(),
+  } as ServiceRequest;
+}
+
 function readRequests(): ServiceRequest[] {
   const raw = localStorage.getItem(REQUESTS_KEY);
-  return raw ? JSON.parse(raw) : [];
+  const arr = raw ? JSON.parse(raw) : [];
+  return Array.isArray(arr) ? arr.map(normalizeRequest) : [];
 }
 
 function writeRequests(requests: ServiceRequest[]) {

@@ -720,7 +720,7 @@ export default function ServiceRequestForm() {
                 ) : !isEditMode && currentStep === 3 ? (
                   'Submit Request'
                 ) : currentStep === FORM_STEPS.length - 1 ? (
-                  isEditMode ? 'Update & Submit' : 'Submit to Supabase'
+                  isEditMode ? 'Update & Submit' : 'Submit'
                 ) : (
                   'Next →'
                 )}
