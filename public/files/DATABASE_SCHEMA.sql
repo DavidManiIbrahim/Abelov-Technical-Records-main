@@ -184,6 +184,11 @@ CREATE POLICY "Users can update their own profile"
   USING (id = auth.uid())
   WITH CHECK (id = auth.uid());
 
+CREATE POLICY "Users can insert their own profile"
+  ON public.user_profiles
+  FOR INSERT
+  WITH CHECK (id = auth.uid());
+
 CREATE POLICY "Admins can view all profiles"
   ON public.user_profiles
   FOR SELECT
@@ -210,6 +215,11 @@ CREATE POLICY "Users can view their own roles"
   ON public.user_roles
   FOR SELECT
   USING (user_id = auth.uid());
+
+CREATE POLICY "Users can insert their own user role (user)"
+  ON public.user_roles
+  FOR INSERT
+  WITH CHECK (user_id = auth.uid() AND role = 'user');
 
 CREATE POLICY "Users can view their own activity logs"
   ON public.user_activity_logs

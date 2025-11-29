@@ -1,12 +1,10 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-
-type LocalUser = { id: string; email: string };
-type LocalSession = { user: LocalUser };
-type StoredUser = { id: string; email: string; password: string; roles?: string[]; is_active?: boolean; created_at?: string };
+import { Session, User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 interface AuthContextType {
-  session: LocalSession | null;
-  user: LocalUser | null;
+  session: Session | null;
+  user: User | null;
   loading: boolean;
   userRoles: string[];
   isAdmin: boolean;
@@ -18,17 +16,35 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [session, setSession] = useState<LocalSession | null>(null);
-  const [user, setUser] = useState<LocalUser | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserRoles = (userId: string) => {
+  const ensureUserProfile = async (u: User) => {
     try {
-      const raw = localStorage.getItem('users');
-      const users: StoredUser[] = raw ? JSON.parse(raw) : [];
-      const found = users.find((u) => u.id === userId);
-      setUserRoles(found?.roles || []);
+      const { data } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('id', u.id)
+        .maybeSingle();
+      if (!data) {
+        await supabase.from('user_profiles').insert({ id: u.id, email: u.email });
+      }
+    } catch (e) {
+      console.error('ensureUserProfile error', e);
+    }
+  };
+
+  const fetchUserRoles = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', userId);
+      if (error) throw error;
+      const roles = (data as Array<{ role: string }> | null)?.map((r) => r.role) || [];
+      setUserRoles(roles);
     } catch (err) {
       console.error('Failed to fetch user roles:', err);
       setUserRoles([]);
@@ -36,52 +52,74 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('auth');
-      const current = raw ? JSON.parse(raw) : null;
-      if (current?.user) {
-        setSession(current);
-        setUser(current.user);
-        fetchUserRoles(current.user.id);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user?.id) {
+        ensureUserProfile(session.user);
+        fetchUserRoles(session.user.id);
       }
-    } finally {
       setLoading(false);
-    }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user?.id) {
+        ensureUserProfile(session.user);
+        fetchUserRoles(session.user.id);
+      } else {
+        setUserRoles([]);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription?.unsubscribe();
   }, []);
 
   const signUp = async (email: string, password: string, userType: 'user' | 'admin' = 'user') => {
-    const raw = localStorage.getItem('users');
-    const users: StoredUser[] = raw ? JSON.parse(raw) : [];
-    if (users.some((u) => u.email === email)) {
-      throw new Error('Email already registered');
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    if (error) {
+      console.error('SignUp error:', error);
+      throw new Error(error.message || 'Failed to create account');
     }
-    const id = crypto.randomUUID ? crypto.randomUUID() : `U-${Date.now()}`;
-    const created_at = new Date().toISOString();
-    const userRecord: StoredUser = { id, email, password, roles: userType === 'admin' ? ['admin'] : ['user'], is_active: true, created_at };
-    users.push(userRecord);
-    localStorage.setItem('users', JSON.stringify(users));
+    const newUser = data.user;
+    if (newUser?.id) {
+      try {
+        await supabase.from('user_profiles').insert({ id: newUser.id, email });
+      } catch (e) {
+        console.error('Insert user_profiles failed (likely due to RLS or pending email confirmation)', e);
+      }
+      try {
+        await supabase.from('user_roles').insert({ user_id: newUser.id, role: userType });
+      } catch (e) {
+        console.error('Insert user_roles failed (admin role may require elevated privileges)', e);
+      }
+    }
   };
 
   const signIn = async (email: string, password: string) => {
-    const raw = localStorage.getItem('users');
-    const users: StoredUser[] = raw ? JSON.parse(raw) : [];
-    const found = users.find((u) => u.email === email && u.password === password);
-    if (!found) {
-      throw new Error('Invalid email or password. Please check and try again.');
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    if (error) {
+      console.error('SignIn error:', error);
+      if (error.message.includes('Invalid login credentials')) {
+        throw new Error('Invalid email or password. Please check and try again.');
+      }
+      throw new Error(error.message || 'Failed to sign in');
     }
-    const localUser: LocalUser = { id: found.id, email: found.email };
-    const sessionObj: LocalSession = { user: localUser };
-    localStorage.setItem('auth', JSON.stringify(sessionObj));
-    setSession(sessionObj);
-    setUser(localUser);
-    setUserRoles(found.roles || []);
   };
 
   const signOut = async () => {
-    localStorage.removeItem('auth');
-    setSession(null);
-    setUser(null);
-    setUserRoles([]);
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
   };
 
   return (

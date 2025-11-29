@@ -1,34 +1,27 @@
-import { ServiceRequest } from "@/types/serviceRequest";
-
-const STORAGE_KEY = "service_requests";
-
-export const saveServiceRequest = (request: ServiceRequest): void => {
-  const requests = getServiceRequests();
-  requests.push(request);
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
-};
-
-export const getServiceRequests = (): ServiceRequest[] => {
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : [];
-};
-
-export const getServiceRequestById = (id: string): ServiceRequest | undefined => {
-  const requests = getServiceRequests();
-  return requests.find(r => r.id === id);
-};
-
-export const updateServiceRequest = (updatedRequest: ServiceRequest): void => {
-  const requests = getServiceRequests();
-  const index = requests.findIndex(r => r.id === updatedRequest.id);
-  if (index !== -1) {
-    requests[index] = updatedRequest;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(requests));
+export function getCache<T>(key: string): T | null {
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return null;
   }
-};
+}
 
-export const generateRequestId = (): string => {
-  const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 7);
-  return `SR-${timestamp}-${random}`.toUpperCase();
-};
+export function setCache<T>(key: string, value: T): void {
+  localStorage.setItem(key, JSON.stringify(value));
+}
+
+export function invalidateCache(key: string): void {
+  localStorage.removeItem(key);
+}
+
+export async function getOrFetch<T>(key: string, fetchFn: () => Promise<T>): Promise<T> {
+  const cached = getCache<T>(key);
+  if (cached !== null && cached !== undefined) {
+    return cached;
+  }
+  const data = await fetchFn();
+  setCache(key, data);
+  return data;
+}

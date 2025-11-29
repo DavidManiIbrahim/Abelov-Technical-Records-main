@@ -50,7 +50,7 @@ export default function LoginPage() {
           return;
         }
 
-        // Sign up the user
+        // Sign up the user (assign selected role)
         await signUp(formData.email, formData.password, userType);
         toast({
           title: 'Success',
