@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, LogOut, Home, Users, Ticket, Activity, TrendingUp } from 'lucide-react';
+import { Loader2, ArrowLeft, LogOut, Home, Users, Ticket, Activity, TrendingUp, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminAPI } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
@@ -129,6 +129,20 @@ export default function AdminDashboard() {
         description: 'Filter failed',
         variant: 'destructive',
       });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (!window.confirm('Delete this user and all their requests?')) return;
+    setLoading(true);
+    try {
+      await adminAPI.deleteUser(id);
+      await loadData();
+      toast({ title: 'Deleted', description: 'User has been removed' });
+    } catch (error) {
+      toast({ title: 'Error', description: 'Failed to delete user', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -393,12 +407,13 @@ export default function AdminDashboard() {
                           <TableHead className="text-xs font-semibold">Revenue</TableHead>
                           <TableHead className="text-xs font-semibold">Status</TableHead>
                           <TableHead className="text-xs font-semibold">Joined</TableHead>
+                          <TableHead className="text-xs font-semibold">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {users.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                               No users found
                             </TableCell>
                           </TableRow>
@@ -417,6 +432,12 @@ export default function AdminDashboard() {
                               </TableCell>
                               <TableCell className="text-sm text-muted-foreground">
                                 {new Date(u.created_at).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                <Button onClick={() => handleDeleteUser(u.id)} variant="destructive" size="sm">
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  Delete
+                                </Button>
                               </TableCell>
                             </TableRow>
                           ))

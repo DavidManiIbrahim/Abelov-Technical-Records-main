@@ -37,10 +37,10 @@ export default function AnalyticsDashboard() {
     const month = new Date(req.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
     const existing = acc.find(item => item.month === month);
     if (existing) {
-      existing.revenue += req.total_cost || 0;
+      existing.revenue += req.payment_completed ? (req.total_cost || 0) : (req.deposit_paid || 0);
       existing.count += 1;
     } else {
-      acc.push({ month, revenue: req.total_cost || 0, count: 1 });
+      acc.push({ month, revenue: req.payment_completed ? (req.total_cost || 0) : (req.deposit_paid || 0), count: 1 });
     }
     return acc;
   }, [] as { month: string; revenue: number; count: number }[]);
@@ -67,7 +67,7 @@ export default function AnalyticsDashboard() {
 
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
 
-  const totalRevenue = requests.reduce((sum, r) => sum + (r.total_cost || 0), 0);
+  const totalRevenue = requests.reduce((sum, r) => sum + (r.payment_completed ? (r.total_cost || 0) : (r.deposit_paid || 0)), 0);
   const avgServiceTime = requests.length > 0 ? Math.round(requests.reduce((sum, r) => {
     const created = new Date(r.created_at);
     const completed = r.diagnosis_date ? new Date(r.diagnosis_date) : new Date();

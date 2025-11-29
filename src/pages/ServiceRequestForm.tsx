@@ -170,7 +170,14 @@ export default function ServiceRequestForm() {
           problem_description: formData.problem_description || '',
           status: (formData.status as string) || 'Pending',
           // Explicitly omit diagnosis/repair/costs/timeline/confirmation for initial create
+          service_charge: formData.service_charge || 0,
+          parts_cost: formData.parts_cost || 0,
+          total_cost: formData.total_cost || 0,
+          deposit_paid: formData.deposit_paid || 0,
+          balance: formData.balance || 0,
+          payment_completed: formData.payment_completed || false,
           repair_timeline: [],
+          customer_confirmation: formData.customer_confirmation || { customer_collected: false, technician: '' },
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         } as ServiceRequest;

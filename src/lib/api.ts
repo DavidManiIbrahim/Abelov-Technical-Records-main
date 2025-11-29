@@ -1,267 +1,226 @@
-import { supabase } from './supabase';
 import { ServiceRequest } from '@/types/database';
 
-// Service Requests CRUD
+const REQUESTS_KEY = 'service_requests';
+const USERS_KEY = 'users';
+
+type StoredUser = {
+  id: string;
+  email: string;
+  full_name?: string | null;
+  company_name?: string | null;
+  is_active?: boolean;
+  roles?: string[];
+  created_at?: string;
+};
+
+function readRequests(): ServiceRequest[] {
+  const raw = localStorage.getItem(REQUESTS_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+function writeRequests(requests: ServiceRequest[]) {
+  localStorage.setItem(REQUESTS_KEY, JSON.stringify(requests));
+}
+
+function readUsers(): StoredUser[] {
+  const raw = localStorage.getItem(USERS_KEY);
+  return raw ? JSON.parse(raw) : [];
+}
+
+function writeUsers(users: StoredUser[]) {
+  localStorage.setItem(USERS_KEY, JSON.stringify(users));
+}
+
 export const serviceRequestAPI = {
-  // Create
   async create(request: Omit<ServiceRequest, 'id' | 'created_at' | 'updated_at'>) {
-    const { data, error } = await supabase
-      .from('service_requests')
-      .insert([request])
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    const reqs = readRequests();
+    const id = `SR-${Date.now()}`;
+    const now = new Date().toISOString();
+    const record: ServiceRequest = {
+      ...request,
+      id,
+      created_at: now,
+      updated_at: now,
+    } as ServiceRequest;
+    reqs.unshift(record);
+    writeRequests(reqs);
+    return record;
   },
 
-  // Read one
   async getById(id: string) {
-    const { data, error } = await supabase
-      .from('service_requests')
-      .select('*')
-      .eq('id', id)
-      .single();
-    if (error) throw error;
-    return data;
+    const reqs = readRequests();
+    return reqs.find(r => r.id === id) || null;
   },
 
-  // Read all for user
   async getByUserId(userId: string) {
-    const { data, error } = await supabase
-      .from('service_requests')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data;
+    const reqs = readRequests();
+    return reqs.filter(r => r.user_id === userId).sort((a, b) => b.created_at.localeCompare(a.created_at));
   },
 
-  // Update
   async update(id: string, updates: Partial<ServiceRequest>) {
-    const { data, error } = await supabase
-      .from('service_requests')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single();
-    if (error) throw error;
-    return data;
+    const reqs = readRequests();
+    const idx = reqs.findIndex(r => r.id === id);
+    if (idx === -1) throw new Error('Request not found');
+    const updated = { ...reqs[idx], ...updates, updated_at: new Date().toISOString() } as ServiceRequest;
+    reqs[idx] = updated;
+    writeRequests(reqs);
+    return updated;
   },
 
-  // Delete
   async delete(id: string) {
-    const { error } = await supabase
-      .from('service_requests')
-      .delete()
-      .eq('id', id);
-    if (error) throw error;
+    const reqs = readRequests();
+    writeRequests(reqs.filter(r => r.id !== id));
   },
 
-  // Search
   async search(userId: string, query: string) {
-    const { data, error } = await supabase
-      .from('service_requests')
-      .select('*')
-      .eq('user_id', userId)
-      .or(`customer_name.ilike.%${query}%,customer_phone.ilike.%${query}%,device_brand.ilike.%${query}%,id.ilike.%${query}%`)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data;
+    const q = query.trim().toLowerCase();
+    const reqs = readRequests();
+    return reqs
+      .filter(r => r.user_id === userId)
+      .filter(r =>
+        (r.customer_name || '').toLowerCase().includes(q) ||
+        (r.customer_phone || '').toLowerCase().includes(q) ||
+        (r.device_brand || '').toLowerCase().includes(q) ||
+        (r.id || '').toLowerCase().includes(q) ||
+        (r.customer_email || '').toLowerCase().includes(q)
+      )
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
   },
 
-  // Get by status
   async getByStatus(userId: string, status: string) {
-    const { data, error } = await supabase
-      .from('service_requests')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('status', status)
-      .order('created_at', { ascending: false });
-    if (error) throw error;
-    return data;
+    const reqs = readRequests();
+    return reqs
+      .filter(r => r.user_id === userId && r.status === status)
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
   },
 
-  // Get statistics
   async getStats(userId: string) {
-    const { data, error } = await supabase
-      .from('service_requests')
-      .select('status, total_cost, payment_completed')
-      .eq('user_id', userId);
-    if (error) throw error;
-    
-    const stats = {
-      total: data?.length || 0,
-      completed: data?.filter(r => r.status === 'Completed').length || 0,
-      pending: data?.filter(r => r.status === 'Pending').length || 0,
-      inProgress: data?.filter(r => r.status === 'In-Progress').length || 0,
-      totalRevenue: data?.filter(r => r.payment_completed === true).reduce((sum, r) => sum + r.total_cost, 0) || 0,
+    const reqs = readRequests().filter(r => r.user_id === userId);
+    const revenue = reqs.reduce((sum, r) => {
+      const paid = r.payment_completed ? (r.total_cost || 0) : (r.deposit_paid || 0);
+      return sum + paid;
+    }, 0);
+    return {
+      total: reqs.length,
+      completed: reqs.filter(r => r.status === 'Completed').length,
+      pending: reqs.filter(r => r.status === 'Pending').length,
+      inProgress: reqs.filter(r => r.status === 'In-Progress').length,
+      totalRevenue: revenue,
     };
-    return stats;
   },
 };
 
-// Admin API
 export const adminAPI = {
-  // Get all users with their stats
   async getAllUsersWithStats() {
-    const { data: users, error: usersError } = await supabase
-      .from('user_profiles')
-      .select('id, email, full_name, company_name, is_active, created_at');
-    
-    if (usersError) throw usersError;
-
-    const enrichedUsers = await Promise.all(
-      (users || []).map(async (user) => {
-        const { data: requests, error: requestsError } = await supabase
-          .from('service_requests')
-          .select('id, status, total_cost, created_at, payment_completed')
-          .eq('user_id', user.id);
-
-        if (requestsError) {
-          console.error(`Failed to fetch requests for user ${user.id}:`, requestsError);
-          return {
-            ...user,
-            ticketCount: 0,
-            totalRevenue: 0,
-            pendingTickets: 0,
-            completedTickets: 0,
-          };
-        }
-
-        const reqs = requests || [];
-        return {
-          ...user,
-          ticketCount: reqs.length,
-          totalRevenue: reqs.filter(r => r.payment_completed === true).reduce((sum, r) => sum + (r.total_cost || 0), 0),
-          pendingTickets: reqs.filter(r => r.status === 'Pending').length,
-          completedTickets: reqs.filter(r => r.status === 'Completed').length,
-          lastActivityDate: reqs.length > 0 ? reqs[0].created_at : null,
-        };
-      })
-    );
-
-    return enrichedUsers;
+    const users = readUsers();
+    const reqs = readRequests();
+    return users.map(u => {
+      const userReqs = reqs.filter(r => r.user_id === u.id);
+      const revenue = userReqs.reduce((sum, r) => {
+        const paid = r.payment_completed ? (r.total_cost || 0) : (r.deposit_paid || 0);
+        return sum + paid;
+      }, 0);
+      return {
+        id: u.id,
+        email: u.email,
+        full_name: u.full_name ?? null,
+        company_name: u.company_name ?? null,
+        is_active: u.is_active ?? true,
+        created_at: u.created_at || new Date().toISOString(),
+        ticketCount: userReqs.length,
+        totalRevenue: revenue,
+        pendingTickets: userReqs.filter(r => r.status === 'Pending').length,
+        completedTickets: userReqs.filter(r => r.status === 'Completed').length,
+        lastActivityDate: userReqs.length > 0 ? userReqs[0].created_at : null,
+      };
+    });
   },
 
-  // Get all service requests (admin view)
   async getAllServiceRequests(limit = 100, offset = 0) {
-    const { data, error, count } = await supabase
-      .from('service_requests')
-      .select('*, user_profiles:user_id(email, full_name)', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (error) throw error;
-    return { requests: data || [], total: count || 0 };
+    const reqs = readRequests().sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return { requests: reqs.slice(offset, offset + limit), total: reqs.length };
   },
 
-  // Get requests by status (admin view)
   async getRequestsByStatus(status: string, limit = 100, offset = 0) {
-    const { data, error, count } = await supabase
-      .from('service_requests')
-      .select('*, user_profiles:user_id(email, full_name)', { count: 'exact' })
-      .eq('status', status)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (error) throw error;
-    return { requests: data || [], total: count || 0 };
+    const filtered = readRequests().filter(r => r.status === status).sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return { requests: filtered.slice(offset, offset + limit), total: filtered.length };
   },
 
-  // Get activity logs
   async getActivityLogs(limit = 50, offset = 0) {
-    const { data, error, count } = await supabase
-      .from('user_activity_logs')
-      .select('*, user_profiles:user_id(email, full_name)', { count: 'exact' })
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (error) throw error;
-    return { logs: data || [], total: count || 0 };
+    return { logs: [], total: 0 };
   },
 
-  // Get global stats
   async getGlobalStats() {
-    const { data: requests, error: reqError } = await supabase
-      .from('service_requests')
-      .select('status, total_cost, user_id, created_at, payment_completed');
-
-    if (reqError) throw reqError;
-
-    const { data: users, error: userError } = await supabase
-      .from('user_profiles')
-      .select('id');
-
-    if (userError) throw userError;
-
-    const reqs = requests || [];
+    const reqs = readRequests();
+    const users = readUsers();
+    const revenue = reqs.reduce((sum, r) => {
+      const paid = r.payment_completed ? (r.total_cost || 0) : (r.deposit_paid || 0);
+      return sum + paid;
+    }, 0);
     return {
-      totalUsers: users?.length || 0,
+      totalUsers: users.length,
       totalTickets: reqs.length,
       pendingTickets: reqs.filter(r => r.status === 'Pending').length,
       completedTickets: reqs.filter(r => r.status === 'Completed').length,
       inProgressTickets: reqs.filter(r => r.status === 'In-Progress').length,
-      totalRevenue: reqs.filter(r => r.payment_completed === true).reduce((sum, r) => sum + (r.total_cost || 0), 0),
+      totalRevenue: revenue,
     };
   },
 
-  // Search requests across all users
   async searchRequests(query: string, limit = 50, offset = 0) {
-    const { data, error, count } = await supabase
-      .from('service_requests')
-      .select('*, user_profiles:user_id(email, full_name)', { count: 'exact' })
-      .or(`customer_name.ilike.%${query}%,customer_phone.ilike.%${query}%,device_brand.ilike.%${query}%,id.ilike.%${query}%,customer_email.ilike.%${query}%`)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (error) throw error;
-    return { requests: data || [], total: count || 0 };
+    const q = query.trim().toLowerCase();
+    const reqs = readRequests()
+      .filter(r =>
+        (r.customer_name || '').toLowerCase().includes(q) ||
+        (r.customer_phone || '').toLowerCase().includes(q) ||
+        (r.device_brand || '').toLowerCase().includes(q) ||
+        (r.id || '').toLowerCase().includes(q) ||
+        (r.customer_email || '').toLowerCase().includes(q)
+      )
+      .sort((a, b) => b.created_at.localeCompare(a.created_at));
+    return { requests: reqs.slice(offset, offset + limit), total: reqs.length };
   },
 
-  // Get user roles
   async getUserRoles(userId: string) {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .select('role, assigned_at')
-      .eq('user_id', userId);
-
-    if (error) throw error;
-    return data || [];
+    const users = readUsers();
+    const u = users.find(x => x.id === userId);
+    return (u?.roles || []).map(role => ({ role, assigned_at: u?.created_at || new Date().toISOString() }));
   },
 
-  // Assign role to user
   async assignRole(userId: string, role: string) {
-    const { data, error } = await supabase
-      .from('user_roles')
-      .insert([{ user_id: userId, role }])
-      .select()
-      .single();
-
-    if (error) throw error;
-    return data;
+    const users = readUsers();
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx === -1) throw new Error('User not found');
+    const roles = new Set(users[idx].roles || []);
+    roles.add(role);
+    users[idx].roles = Array.from(roles);
+    writeUsers(users);
+    return { user_id: userId, role };
   },
 
-  // Remove role from user
   async removeRole(userId: string, role: string) {
-    const { error } = await supabase
-      .from('user_roles')
-      .delete()
-      .eq('user_id', userId)
-      .eq('role', role);
-
-    if (error) throw error;
+    const users = readUsers();
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx === -1) return;
+    users[idx].roles = (users[idx].roles || []).filter(r => r !== role);
+    writeUsers(users);
   },
 
-  // Disable/enable user
   async toggleUserStatus(userId: string, isActive: boolean) {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .update({ is_active: isActive })
-      .eq('id', userId)
-      .select()
-      .single();
+    const users = readUsers();
+    const idx = users.findIndex(u => u.id === userId);
+    if (idx === -1) throw new Error('User not found');
+    users[idx].is_active = isActive;
+    writeUsers(users);
+    return users[idx];
+  },
 
-    if (error) throw error;
-    return data;
+  async deleteUser(userId: string) {
+    const users = readUsers();
+    const filteredUsers = users.filter(u => u.id !== userId);
+    writeUsers(filteredUsers);
+    const reqs = readRequests();
+    const filteredReqs = reqs.filter(r => r.user_id !== userId);
+    writeRequests(filteredReqs);
   },
 };

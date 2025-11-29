@@ -51,10 +51,10 @@ export default function LoginPage() {
         }
 
         // Sign up the user
-        await signUp(formData.email, formData.password);
+        await signUp(formData.email, formData.password, userType);
         toast({
           title: 'Success',
-          description: `Account created as ${userType}! You can now log in. ${userType === 'admin' ? 'Please use ADMIN_ACCOUNT_SETUP.sql to complete admin setup.' : ''}`,
+          description: `Account created as ${userType}. You can now log in.`,
         });
         setIsSignUp(false);
         setUserType('user');
