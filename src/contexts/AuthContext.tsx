@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { Session, User } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase';
+type Session = { user: { id: string; email: string } } | null;
+type User = { id: string; email: string } | null;
+import { convex } from '@/lib/convexClient';
+type SignInResult = { user: { id: string; email: string }; roles: string[] };
 
 interface AuthContextType {
   session: Session | null;
@@ -21,30 +23,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const ensureUserProfile = async (u: User) => {
-    try {
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('id', u.id)
-        .maybeSingle();
-      if (!data) {
-        await supabase.from('user_profiles').insert({ id: u.id, email: u.email });
-      }
-    } catch (e) {
-      console.error('ensureUserProfile error', e);
-    }
-  };
-
   const fetchUserRoles = async (userId: string) => {
     try {
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', userId);
-      if (error) throw error;
-      const roles = (data as Array<{ role: string }> | null)?.map((r) => r.role) || [];
-      setUserRoles(roles);
+      const roles = await convex.query('users:getRoles', { userId });
+      const list = (roles as Array<{ role: string }> | null)?.map((r) => r.role) || [];
+      setUserRoles(list);
     } catch (err) {
       console.error('Failed to fetch user roles:', err);
       setUserRoles([]);
@@ -52,74 +35,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user?.id) {
-        ensureUserProfile(session.user);
-        fetchUserRoles(session.user.id);
-      }
-      setLoading(false);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user?.id) {
-        ensureUserProfile(session.user);
-        fetchUserRoles(session.user.id);
-      } else {
-        setUserRoles([]);
-      }
-      setLoading(false);
-    });
-
-    return () => subscription?.unsubscribe();
+    setLoading(false);
   }, []);
 
   const signUp = async (email: string, password: string, userType: 'user' | 'admin' = 'user') => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    if (error) {
-      console.error('SignUp error:', error);
-      throw new Error(error.message || 'Failed to create account');
-    }
-    const newUser = data.user;
-    if (newUser?.id) {
-      try {
-        await supabase.from('user_profiles').insert({ id: newUser.id, email });
-      } catch (e) {
-        console.error('Insert user_profiles failed (likely due to RLS or pending email confirmation)', e);
-      }
-      try {
-        await supabase.from('user_roles').insert({ user_id: newUser.id, role: userType });
-      } catch (e) {
-        console.error('Insert user_roles failed (admin role may require elevated privileges)', e);
-      }
-    }
+    const user = await convex.mutation('users:signUp', { email, password, role: userType });
+    setSession({ user });
+    setUser(user);
+    await fetchUserRoles(user.id);
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    if (error) {
-      console.error('SignIn error:', error);
-      if (error.message.includes('Invalid login credentials')) {
+    try {
+      const res = await convex.query('users:signIn', { email, password });
+      const { user: u, roles } = res as SignInResult;
+      setSession({ user: u });
+      setUser(u);
+      setUserRoles(roles || []);
+    } catch (e) {
+      if (e?.message?.includes('Invalid')) {
         throw new Error('Invalid email or password. Please check and try again.');
       }
-      throw new Error(error.message || 'Failed to sign in');
+      const msg = e instanceof Error ? e.message : 'Failed to sign in';
+      throw new Error(msg);
     }
   };
 
   const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    setSession(null);
+    setUser(null);
+    setUserRoles([]);
   };
 
   return (

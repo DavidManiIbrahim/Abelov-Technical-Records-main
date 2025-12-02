@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,8 @@ import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { serviceRequestAPI } from '@/lib/api';
 import { ServiceRequest, RepairTimelineStep } from '@/types/database';
-import { Plus, Trash2, ArrowLeft, Loader2, LogOut, Home } from 'lucide-react';
-import { FaStore, FaUser, FaLaptop, FaExclamationTriangle, FaTools, FaMoneyBill, FaCalendarAlt, FaCheckCircle, FaSave } from 'react-icons/fa';
+import { Plus, Trash2, Loader2, LogOut, Home } from 'lucide-react';
+import { FaStore, FaUser, FaLaptop, FaExclamationTriangle, FaTools, FaMoneyBill, FaCalendarAlt, FaCheckCircle } from 'react-icons/fa';
 
 const FORM_STEPS = [
   { id: 'shop', title: 'Shop Information', icon: FaStore },
@@ -76,14 +76,14 @@ export default function ServiceRequestForm() {
     } else {
       setLoading(false);
     }
-  }, [id, user?.id]);
+  }, [id, user?.id, isEditMode, loadRequest]);
 
-  const loadRequest = async (requestId: string) => {
+  const loadRequest = useCallback(async (requestId: string) => {
     try {
       const request = await serviceRequestAPI.getById(requestId);
       setFormData(request);
       setTimelineSteps(request.repair_timeline.length > 0 ? request.repair_timeline : [{ step: '', date: '', note: '', status: '' }]);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to load request',
@@ -93,7 +93,7 @@ export default function ServiceRequestForm() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   const updateField = (field: keyof ServiceRequest, value: unknown) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

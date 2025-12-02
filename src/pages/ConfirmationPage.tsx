@@ -58,7 +58,7 @@ export default function ConfirmationPage() {
         title: "PDF Downloaded!",
         description: "Your service request has been exported as PDF.",
       });
-    } catch (error) {
+    } catch {
       toast({
         title: "Export Failed",
         description: "Could not generate PDF. Please try again.",

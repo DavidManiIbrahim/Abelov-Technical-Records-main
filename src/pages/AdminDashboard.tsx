@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Loader2, ArrowLeft, LogOut, Home, Users, Ticket, Activity, TrendingUp, Trash2 } from 'lucide-react';
+import { Loader2, LogOut, Home, Users, Ticket, Activity, TrendingUp, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { adminAPI } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
@@ -100,7 +100,7 @@ export default function AdminDashboard() {
       setRequests(results.requests);
       setTotalRequests(results.total);
       setCurrentPage(0);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Search failed',
@@ -123,7 +123,7 @@ export default function AdminDashboard() {
       setRequests(results.requests);
       setTotalRequests(results.total);
       setCurrentPage(0);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Filter failed',
@@ -141,7 +141,7 @@ export default function AdminDashboard() {
       await adminAPI.deleteUser(id);
       await loadData();
       toast({ title: 'Deleted', description: 'User has been removed' });
-    } catch (error) {
+    } catch {
       toast({ title: 'Error', description: 'Failed to delete user', variant: 'destructive' });
     } finally {
       setLoading(false);

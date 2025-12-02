@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -25,11 +25,7 @@ export default function DashboardPage() {
     totalRevenue: 0,
   });
 
-  useEffect(() => {
-    loadRequests();
-  }, [user?.id]);
-
-  const loadRequests = async () => {
+  const loadRequests = useCallback(async () => {
     if (!user?.id) return;
     setLoading(true);
     try {
@@ -45,7 +41,11 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.id]);
+
+  useEffect(() => {
+    loadRequests();
+  }, [loadRequests]);
 
   const handleSearch = async (query: string) => {
     setSearchQuery(query);

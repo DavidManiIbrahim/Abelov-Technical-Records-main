@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,13 +29,13 @@ export default function ServiceRequestViewPage() {
     if (id) {
       loadRequest(id);
     }
-  }, [id]);
+  }, [id, loadRequest]);
 
-  const loadRequest = async (requestId: string) => {
+  const loadRequest = useCallback(async (requestId: string) => {
     try {
       const data = await serviceRequestAPI.getById(requestId);
       setRequest(data);
-    } catch (error) {
+    } catch {
       toast({
         title: 'Error',
         description: 'Failed to load request',
@@ -45,7 +45,7 @@ export default function ServiceRequestViewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [navigate]);
 
   if (loading) {
     return (
