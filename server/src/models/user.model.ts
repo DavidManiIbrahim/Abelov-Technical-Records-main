@@ -1,0 +1,21 @@
+import mongoose, { Schema, model } from "mongoose";
+
+const UserSchema = new Schema(
+  {
+    email: { type: String, required: true, unique: true, index: true },
+    roles: { type: [String], default: [] },
+    is_active: { type: Boolean, default: true },
+  },
+  { timestamps: { createdAt: "created_at", updatedAt: "updated_at" } }
+);
+
+UserSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  obj.id = obj._id.toString();
+  delete obj._id;
+  delete obj.__v;
+  return obj;
+};
+
+export const UserModel = mongoose.models.users || model("users", UserSchema);
+
