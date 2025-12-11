@@ -24,7 +24,8 @@ const EnvSchema = z.object({
   MONGODB_MIN_POOL_SIZE: z.string().transform((v) => Number(v)).default("5"),
   MONGODB_MAX_POOL_SIZE: z.string().transform((v) => Number(v)).default("20"),
   FIELD_ENCRYPTION_KEY: z.string().min(32).optional(),
-  ADMIN_EMAIL: z.string().email().optional()
+  ADMIN_EMAIL: z.string().email().optional(),
+  AUTH_SECRET: z.string().min(16).optional()
 });
 
 const parsed = EnvSchema.safeParse(process.env);
@@ -45,4 +46,5 @@ export const env = parsed.data as unknown as {
   MONGODB_MAX_POOL_SIZE: number;
   FIELD_ENCRYPTION_KEY?: string;
   ADMIN_EMAIL?: string;
+  AUTH_SECRET?: string;
 };

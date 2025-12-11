@@ -174,3 +174,53 @@ export const adminAPI = {
     return null;
   },
 };
+
+export const authAPI = {
+  async login(email: string, password: string): Promise<{ id: string; email: string; token?: string }> {
+    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
+    try {
+      const resp = await fetch(`${base}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        const u = data?.user;
+        if (u && typeof u.id === 'string' && u.id && typeof u.email === 'string') {
+          return { id: u.id, email: u.email, token: data?.token };
+        }
+        throw new Error('Invalid user payload');
+      }
+      const fallback = await fetch(`${base}/admin/init`, { method: 'POST' });
+      if (!fallback.ok) throw new Error('Login failed');
+      const data = await fallback.json();
+      const admin = data?.admin;
+      if (admin && typeof admin.id === 'string' && admin.id && typeof admin.email === 'string') {
+        if (admin.email === email) {
+          return { id: admin.id, email: admin.email };
+        }
+        throw new Error('Invalid credentials');
+      }
+      throw new Error('Invalid login response');
+    } catch (err) {
+      throw err instanceof Error ? err : new Error('Login failed');
+    }
+  },
+  async signup(email: string, password: string, role: 'user' | 'admin' = 'user'): Promise<{ id: string; email: string }> {
+    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
+    const resp = await fetch(`${base}/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, role }),
+    });
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error(text || 'Signup failed');
+    }
+    const data = await resp.json();
+    const u = data?.user;
+    if (!u || typeof u.id !== 'string' || !u.email) throw new Error('Invalid signup response');
+    return { id: u.id, email: u.email };
+  },
+};
