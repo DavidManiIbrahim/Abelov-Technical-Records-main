@@ -1,7 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { authAPI } from '@/lib/api';
-type Session = { user: { id: string; email: string } } | null;
-type User = { id: string; email: string } | null;
+
+type Session = { user: { id: string; email: string; roles?: string[] } } | null;
+type User = { id: string; email: string; roles?: string[] } | null;
 
 interface AuthContextType {
   session: Session | null;
@@ -22,54 +23,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserRoles = async (_userId: string) => {
-    setUserRoles([]);
-  };
-
+  // On app load, restore session from backend (not localStorage)
   useEffect(() => {
-    const raw = localStorage.getItem('app_user');
-    if (raw) {
+    (async () => {
       try {
-        const u = JSON.parse(raw) as { id?: string; email?: string };
-        if (u && typeof u.id === 'string' && u.id && typeof u.email === 'string' && u.email) {
-          setSession({ user: { id: u.id, email: u.email } });
-          setUser({ id: u.id, email: u.email });
-          fetchUserRoles(u.id);
-        } else {
-          localStorage.removeItem('app_user');
-          localStorage.removeItem('isLoggedIn');
+        const me = await authAPI.me();
+        if (me && me.id) {
+          const roles = (me.roles as string[]) || [];
+          setSession({ user: { id: me.id, email: me.email, roles } });
+          setUser({ id: me.id, email: me.email, roles });
+          setUserRoles(roles);
         }
       } catch {
-        localStorage.removeItem('app_user');
-        localStorage.removeItem('isLoggedIn');
+        // No valid session on backend; user is logged out
+        await authAPI.logout();
+      } finally {
+        setLoading(false);
       }
-    }
-    setLoading(false);
+    })();
   }, []);
 
   const signUp = async (email: string, password: string, userType: 'user' | 'admin' = 'user') => {
-    const res = await authAPI.signup(email, password, userType);
-    return res;
+    const user = await authAPI.signup(email, password, userType);
+    // After signup, user must login separately
+    return user;
   };
 
   const signIn = async (email: string, password: string) => {
     try {
       const result = await authAPI.login(email, password);
       if (!result || !result.id) {
-        localStorage.removeItem('app_user');
-        localStorage.removeItem('isLoggedIn');
         throw new Error('Invalid credentials');
       }
-      localStorage.setItem('app_user', JSON.stringify({ id: result.id, email: result.email }));
-      localStorage.setItem('isLoggedIn', 'true');
-      if (result.token) localStorage.setItem('auth_token', result.token);
-      setSession({ user: { id: result.id, email: result.email } });
-      setUser({ id: result.id, email: result.email });
-      await fetchUserRoles(result.id);
+      const roles = (result.roles as string[]) || [];
+      setSession({ user: { id: result.id, email: result.email, roles } });
+      setUser({ id: result.id, email: result.email, roles });
+      setUserRoles(roles);
     } catch (err) {
-      localStorage.removeItem('app_user');
-      localStorage.removeItem('isLoggedIn');
-      localStorage.removeItem('auth_token');
+      await authAPI.logout();
       throw err;
     }
   };
@@ -78,9 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(null);
     setUser(null);
     setUserRoles([]);
-    localStorage.removeItem('app_user');
-    localStorage.removeItem('isLoggedIn');
-    localStorage.removeItem('auth_token');
+    await authAPI.logout();
   };
 
   return (

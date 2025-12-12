@@ -6,6 +6,11 @@ interface AdminProtectedRouteProps {
   children: React.ReactNode;
 }
 
+/**
+ * AdminProtectedRoute - Guards routes to admin users only
+ * Admin role comes from backend user object, restored on app load via AuthContext.me()
+ * Never checks localStorage directly
+ */
 export default function AdminProtectedRoute({ children }: AdminProtectedRouteProps) {
   const { isAdmin, loading } = useAuth();
 
@@ -17,6 +22,7 @@ export default function AdminProtectedRoute({ children }: AdminProtectedRoutePro
     );
   }
 
+  // Redirect if not admin (role from backend session)
   if (!isAdmin) {
     return <Navigate to="/dashboard" replace />;
   }

@@ -6,6 +6,11 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+/**
+ * ProtectedRoute - Guards routes to logged-in users only
+ * Session state comes from backend, restored on app load via AuthContext.me()
+ * Never checks localStorage directly
+ */
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { session, loading } = useAuth();
 
@@ -17,6 +22,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
     );
   }
 
+  // Redirect to login if no session from backend
   if (!session) {
     return <Navigate to="/login" replace />;
   }

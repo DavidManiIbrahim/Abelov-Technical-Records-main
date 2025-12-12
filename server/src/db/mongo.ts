@@ -3,20 +3,17 @@ import mongoose from "mongoose";
 import { env } from "../config/env";
 
 export const connectMongo = async () => {
-  const uri = env.MONGODB_URI;
-  const dbName = env.MONGODB_DB_NAME;
-  await mongoose.connect(uri, {
-    dbName,
-    minPoolSize: env.MONGODB_MIN_POOL_SIZE,
-    maxPoolSize: env.MONGODB_MAX_POOL_SIZE,
-    autoIndex: true,
-    serverSelectionTimeoutMS: 5000,
-    connectTimeoutMS: 10000,
-  });
+  // Intentionally not connecting to any external DB.
+  // Keep function for compatibility with existing startup flow.
+  // If you want to re-enable DB, restore mongoose.connect using env vars.
+  console.info('connectMongo: skipped (DB disabled)');
+  return Promise.resolve();
 };
 
 export const disconnectMongo = async () => {
-  await mongoose.disconnect();
+  console.info('disconnectMongo: skipped (DB disabled)');
+  return Promise.resolve();
 };
 
-export const mongoState = () => mongoose.connection.readyState
+export const mongoState = () => 0; // 0 = disconnected
+

@@ -1,32 +1,40 @@
 import { ServiceRequest } from '@/types/database';
 import { getCache, setCache, invalidateCache } from '@/utils/storage';
 
-// Local storage key to keep all requests
-const ALL_REQUESTS_KEY = 'requests:all';
+// Local storage keys (cache only after DB success, not persistence)
+const AUTH_TOKEN_KEY = 'auth_token';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:4000/api/v1';
 
-const genId = () => `sr_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+const apiFetch = async (path: string, init?: RequestInit) => {
+  const token = getCache<string>(AUTH_TOKEN_KEY);
+  const headers = {
+    'Content-Type': 'application/json',
+    ...(token && { 'Authorization': `Bearer ${token}` }),
+  };
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...init,
+    headers: { ...headers, ...(init?.headers || {}) },
+  });
+  if (!res.ok) {
+    if (res.status === 401) invalidateCache(AUTH_TOKEN_KEY);
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error || `API error ${res.status}`);
+  }
+  if (res.status === 204) return null;
+  return res.json();
+};
 
-function readAllRequests(): ServiceRequest[] {
-  return getCache<ServiceRequest[]>(ALL_REQUESTS_KEY) || [];
-}
-
-function writeAllRequests(list: ServiceRequest[]) {
-  setCache<ServiceRequest[]>(ALL_REQUESTS_KEY, list);
-}
-
+// Service Request API - All calls go to MongoDB backend
 export const serviceRequestAPI = {
   async create(request: Omit<ServiceRequest, 'id' | 'created_at' | 'updated_at'>) {
-    const all = readAllRequests();
-    const id = genId();
-    const now = new Date().toISOString();
-    const record = { ...(request as ServiceRequest), id, created_at: now, updated_at: now } as ServiceRequest;
-    all.unshift(record);
-    writeAllRequests(all);
+    const res = await apiFetch('/requests', { 
+      method: 'POST', 
+      body: JSON.stringify(request) 
+    });
+    const record = (res?.data || res) as ServiceRequest;
     setCache<ServiceRequest>(`service_request:${record.id}`, record);
     if (record.user_id) {
-      const listKey = `service_requests:${record.user_id}`;
-      const cached = getCache<ServiceRequest[]>(listKey) || [];
-      setCache(listKey, [record, ...cached]);
+      invalidateCache(`service_requests:${record.user_id}`);
       invalidateCache(`stats:${record.user_id}`);
     }
     return record;
@@ -35,192 +43,178 @@ export const serviceRequestAPI = {
   async getById(id: string) {
     const cached = getCache<ServiceRequest | null>(`service_request:${id}`);
     if (cached) return cached;
-    const all = readAllRequests();
-    const found = all.find(r => r.id === id) || null;
-    if (found) setCache<ServiceRequest>(`service_request:${id}`, found);
-    return found;
+    const res = await apiFetch(`/requests/${id}`);
+    const record = (res?.data || res) as ServiceRequest;
+    setCache<ServiceRequest>(`service_request:${id}`, record);
+    return record;
   },
 
   async getByUserId(userId: string) {
     const key = `service_requests:${userId}`;
     const cached = getCache<ServiceRequest[]>(key);
     if (cached) return cached;
-    const all = readAllRequests();
-    const list = all.filter(r => r.user_id === userId);
+    const res = await apiFetch(`/requests?user_id=${userId}`);
+    const list = (res?.data || res) as ServiceRequest[];
     setCache<ServiceRequest[]>(key, list);
     return list;
   },
 
   async update(id: string, updates: Partial<ServiceRequest>) {
-    const all = readAllRequests();
-    const idx = all.findIndex(r => r.id === id);
-    if (idx < 0) throw new Error('Not found');
-    const existing = all[idx];
-    const updated = { ...existing, ...updates, updated_at: new Date().toISOString() } as ServiceRequest;
-    all[idx] = updated;
-    writeAllRequests(all);
-    setCache<ServiceRequest>(`service_request:${updated.id}`, updated);
-    if (updated.user_id) {
-      const listKey = `service_requests:${updated.user_id}`;
-      const cached = getCache<ServiceRequest[]>(listKey) || [];
-      const ii = cached.findIndex(r => r.id === updated.id);
-      if (ii >= 0) {
-        cached[ii] = updated;
-        setCache(listKey, [...cached]);
-      }
-      invalidateCache(`stats:${updated.user_id}`);
+    const res = await apiFetch(`/requests/${id}`, { 
+      method: 'PUT', 
+      body: JSON.stringify(updates) 
+    });
+    const record = (res?.data || res) as ServiceRequest;
+    setCache<ServiceRequest>(`service_request:${record.id}`, record);
+    if (record.user_id) {
+      invalidateCache(`service_requests:${record.user_id}`);
+      invalidateCache(`stats:${record.user_id}`);
     }
-    return updated;
+    return record;
   },
 
   async delete(id: string) {
-    const all = readAllRequests();
-    const idx = all.findIndex(r => r.id === id);
-    if (idx >= 0) {
-      const removed = all.splice(idx, 1)[0];
-      writeAllRequests(all);
-      if (removed.user_id) {
-        const listKey = `service_requests:${removed.user_id}`;
-        const arr = getCache<ServiceRequest[]>(listKey) || [];
-        setCache(listKey, arr.filter(r => r.id !== id));
-        invalidateCache(`stats:${removed.user_id}`);
-      }
-    }
+    await apiFetch(`/requests/${id}`, { method: 'DELETE' });
     invalidateCache(`service_request:${id}`);
+    // Invalidate all related caches
+    const keys = Object.keys(localStorage);
+    keys.forEach((key) => {
+      if (key.startsWith('service_requests:') || key.startsWith('stats:')) {
+        invalidateCache(key);
+      }
+    });
   },
 
   async search(userId: string, query: string) {
-    const q = query.toLowerCase();
-    const all = readAllRequests();
-    return all.filter(r => (
-      (r.customer_name || '').toLowerCase().includes(q) ||
-      (r.customer_phone || '').toLowerCase().includes(q) ||
-      (r.device_brand || '').toLowerCase().includes(q) ||
-      (r.id || '').toLowerCase().includes(q) ||
-      (r.customer_email || '').toLowerCase().includes(q)
-    ) && r.user_id === userId);
+    const res = await apiFetch(`/requests/search?user_id=${userId}&q=${encodeURIComponent(query)}`);
+    const list = (res?.data || res) as ServiceRequest[];
+    return list;
   },
 
   async getByStatus(userId: string, status: string) {
-    const all = readAllRequests();
-    return all.filter(r => r.user_id === userId && r.status === status);
+    const res = await apiFetch(`/requests?user_id=${userId}&status=${status}`);
+    const list = (res?.data || res) as ServiceRequest[];
+    return list;
   },
 
   async getStats(userId: string) {
-    const all = readAllRequests();
-    const byUser = all.filter(r => r.user_id === userId);
-    const completed = byUser.filter(r => r.status === 'Completed').length;
-    const pending = byUser.filter(r => r.status === 'Pending').length;
-    const inProgress = byUser.filter(r => r.status === 'In-Progress').length;
-    const totalRevenue = byUser.reduce((sum, r) => sum + (r.payment_completed ? (r.total_cost ?? 0) : (r.deposit_paid ?? 0)), 0);
-    return { total: byUser.length, completed, pending, inProgress, totalRevenue };
+    const key = `stats:${userId}`;
+    const cached = getCache<{ total: number; completed: number; pending: number; inProgress: number; totalRevenue: number }>(key);
+    if (cached) return cached;
+    const res = await apiFetch(`/requests/stats/${userId}`);
+    const stats = (res?.data || res) as any;
+    setCache(key, stats);
+    return stats;
   },
 };
 
 type UserProfile = { id: string; email: string; full_name: string | null; company_name: string | null; is_active: boolean; created_at: string };
 
+// Admin API - All calls go to MongoDB backend
 export const adminAPI = {
   async getAllUsersWithStats() {
-    // Users are currently not kept centrally; return empty list
-    return [] as unknown[];
+    const res = await apiFetch('/admin/users');
+    return (res?.data || res) as unknown[];
   },
+
   async getAllServiceRequests(limit = 100, offset = 0) {
-    const list = readAllRequests();
-    const sorted = list.sort((a, b) => (b.created_at as string).localeCompare(a.created_at as string));
-    return { requests: sorted.slice(offset, offset + limit), total: sorted.length };
-  },
-  async getRequestsByStatus(status: string, limit = 100, offset = 0) {
-    const list = readAllRequests();
-    const filtered = list.filter(r => r.status === status).sort((a, b) => (b.created_at as string).localeCompare(a.created_at as string));
-    return { requests: filtered.slice(offset, offset + limit), total: filtered.length };
-  },
-  async getActivityLogs(limit = 50, offset = 0) {
-    return { logs: [], total: 0 };
-  },
-  async getGlobalStats() {
-    const list = readAllRequests();
-    const totalRevenue = list.reduce((sum, r) => sum + (r.payment_completed ? (r.total_cost ?? 0) : (r.deposit_paid ?? 0)), 0);
-    return {
-      totalUsers: 0,
-      totalTickets: list.length,
-      pendingTickets: list.filter(r => r.status === 'Pending').length,
-      completedTickets: list.filter(r => r.status === 'Completed').length,
-      inProgressTickets: list.filter(r => r.status === 'In-Progress').length,
-      totalRevenue,
+    const res = await apiFetch(`/admin/requests?limit=${limit}&offset=${offset}`);
+    return { 
+      requests: (res?.data || res?.requests || []) as ServiceRequest[], 
+      total: res?.total || 0 
     };
   },
+
+  async getRequestsByStatus(status: string, limit = 100, offset = 0) {
+    const res = await apiFetch(`/admin/requests?status=${status}&limit=${limit}&offset=${offset}`);
+    return { 
+      requests: (res?.data || res?.requests || []) as ServiceRequest[], 
+      total: res?.total || 0 
+    };
+  },
+
+  async getActivityLogs(limit = 50, offset = 0) {
+    const res = await apiFetch(`/admin/logs?limit=${limit}&offset=${offset}`);
+    return { 
+      logs: (res?.data || res?.logs || []) as any[], 
+      total: res?.total || 0 
+    };
+  },
+
+  async getGlobalStats() {
+    const res = await apiFetch('/admin/stats');
+    return (res?.data || res) as any;
+  },
+
   async searchRequests(query: string, limit = 50, offset = 0) {
-    const q = query.toLowerCase();
-    const list = readAllRequests();
-    const filtered = list.filter(r =>
-      (r.customer_name ?? '').toLowerCase().includes(q) ||
-      (r.customer_phone ?? '').toLowerCase().includes(q) ||
-      (r.device_brand ?? '').toLowerCase().includes(q) ||
-      (r.id ?? '').toLowerCase().includes(q) ||
-      (r.customer_email ?? '').toLowerCase().includes(q)
-    ).sort((a, b) => (b.created_at as string).localeCompare(a.created_at as string));
-    return { requests: filtered.slice(offset, offset + limit), total: filtered.length };
+    const res = await apiFetch(`/admin/requests/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`);
+    return { 
+      requests: (res?.data || res?.requests || []) as ServiceRequest[], 
+      total: res?.total || 0 
+    };
   },
+
   async getUserRoles(userId: string) {
-    return [] as Array<{ role: string; assigned_at: string }>;
+    const res = await apiFetch(`/admin/users/${userId}/roles`);
+    return (res?.data || res || []) as Array<{ role: string; assigned_at: string }>;
   },
+
   async assignRole(userId: string, role: string) {
-    return null;
+    const res = await apiFetch(`/admin/users/${userId}/roles`, {
+      method: 'POST',
+      body: JSON.stringify({ role }),
+    });
+    return res?.data || res;
   },
+
   async removeRole(userId: string, role: string) {
-    return null;
+    const res = await apiFetch(`/admin/users/${userId}/roles/${role}`, {
+      method: 'DELETE',
+    });
+    return res?.data || res;
   },
+
   async toggleUserStatus(userId: string, isActive: boolean) {
-    return null;
+    const res = await apiFetch(`/admin/users/${userId}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ is_active: isActive }),
+    });
+    return res?.data || res;
   },
 };
 
+// Auth API - all calls go to backend, token cached after success
 export const authAPI = {
-  async login(email: string, password: string): Promise<{ id: string; email: string; token?: string }> {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
-    try {
-      const resp = await fetch(`${base}/auth/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-      if (resp.ok) {
-        const data = await resp.json();
-        const u = data?.user;
-        if (u && typeof u.id === 'string' && u.id && typeof u.email === 'string') {
-          return { id: u.id, email: u.email, token: data?.token };
-        }
-        throw new Error('Invalid user payload');
-      }
-      const fallback = await fetch(`${base}/admin/init`, { method: 'POST' });
-      if (!fallback.ok) throw new Error('Login failed');
-      const data = await fallback.json();
-      const admin = data?.admin;
-      if (admin && typeof admin.id === 'string' && admin.id && typeof admin.email === 'string') {
-        if (admin.email === email) {
-          return { id: admin.id, email: admin.email };
-        }
-        throw new Error('Invalid credentials');
-      }
-      throw new Error('Invalid login response');
-    } catch (err) {
-      throw err instanceof Error ? err : new Error('Login failed');
-    }
-  },
-  async signup(email: string, password: string, role: 'user' | 'admin' = 'user'): Promise<{ id: string; email: string }> {
-    const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:4000/api/v1';
-    const resp = await fetch(`${base}/auth/signup`, {
+  async signup(email: string, password: string, role?: 'user' | 'admin') {
+    const res = await apiFetch('/auth/signup', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password, role }),
     });
-    if (!resp.ok) {
-      const text = await resp.text();
-      throw new Error(text || 'Signup failed');
-    }
-    const data = await resp.json();
-    const u = data?.user;
-    if (!u || typeof u.id !== 'string' || !u.email) throw new Error('Invalid signup response');
-    return { id: u.id, email: u.email };
+    const user = res?.user || res;
+    return user;
+  },
+
+  async login(email: string, password: string) {
+    const res = await apiFetch('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password }),
+    });
+    const user = res?.user || res;
+    const token = res?.token;
+    // Cache token after successful backend login
+    if (token) setCache<string>(AUTH_TOKEN_KEY, token);
+    return { ...user, token };
+  },
+
+  async me() {
+    // Fetch current user from backend using cached token
+    const res = await apiFetch('/auth/me');
+    const user = res?.user || res;
+    return user;
+  },
+
+  async logout() {
+    // Clear cached token on logout
+    invalidateCache(AUTH_TOKEN_KEY);
   },
 };
