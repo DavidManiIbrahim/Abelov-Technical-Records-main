@@ -1,4 +1,5 @@
 import express from "express";
+import cookieParser from "cookie-parser";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
@@ -25,6 +26,7 @@ export const createApp = () => {
     })
   );
   app.use(compression());
+  app.use(cookieParser());
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true }));
 

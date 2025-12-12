@@ -154,13 +154,13 @@ export default function ServiceRequestForm() {
         });
       } else {
         // For new requests we only submit the core fields (stop at Problem Description).
-        const newRequest: Partial<ServiceRequest> = {
+        const newRequest = {
           user_id: user.id,
-          id: `SR-${Date.now()}`,
           technician_name: formData.technician_name || '',
           request_date: formData.request_date || new Date().toISOString().split('T')[0],
           customer_name: formData.customer_name || '',
           customer_phone: formData.customer_phone || '',
+          customer_email: formData.customer_email || '',
           customer_address: formData.customer_address || '',
           device_model: formData.device_model || 'Laptop',
           device_brand: formData.device_brand || '',
@@ -169,18 +169,13 @@ export default function ServiceRequestForm() {
           accessories_received: formData.accessories_received || '',
           problem_description: formData.problem_description || '',
           status: (formData.status as string) || 'Pending',
-          // Explicitly omit diagnosis/repair/costs/timeline/confirmation for initial create
           service_charge: formData.service_charge || 0,
           parts_cost: formData.parts_cost || 0,
           total_cost: formData.total_cost || 0,
           deposit_paid: formData.deposit_paid || 0,
           balance: formData.balance || 0,
           payment_completed: formData.payment_completed || false,
-          repair_timeline: [],
-          customer_confirmation: formData.customer_confirmation || { customer_collected: false, technician: '' },
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        } as ServiceRequest;
+        };
         await serviceRequestAPI.create(newRequest as unknown as Omit<ServiceRequest, 'id' | 'created_at' | 'updated_at'>);
         toast({
           title: 'Success!',

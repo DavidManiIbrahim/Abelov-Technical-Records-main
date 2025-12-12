@@ -30,8 +30,7 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
 };
 
 /**
- * Login - Authenticate user and return session token
- * Client MUST cache token in memory/localStorage after DB confirms success
+ * Login - Authenticate user and return HTTP-only cookie with JWT
  */
 export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -41,31 +40,57 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const ok = verifyPassword(password, (doc as any).password_salt, (doc as any).password_hash);
     if (!ok) throw new ApiError(401, "Invalid credentials");
     const user = doc.toJSON() as any;
-    const token = createToken({ sub: user.id, email: user.email }, 3600);
-    // Return user with roles and token; client caches token for next requests
-    res.json({ user, token });
+    const token = createToken({ sub: user.id, email: user.email }, 604800);
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 604800 * 1000,
+      path: "/",
+    });
+    res.json({ user });
   } catch (err) {
     next(err);
   }
 };
 
 /**
- * Me - Fetch current user from Bearer token
+ * Me - Fetch current user from HTTP-only cookie
  * Called by frontend AuthContext on app load to restore session
  * Returns full user object including roles
  */
 export const me = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const auth = req.headers.authorization || "";
-    const parts = auth.split(" ");
-    if (parts.length !== 2 || parts[0] !== "Bearer") throw new ApiError(401, "Unauthorized");
-    const payload = verifyToken(parts[1]);
+    let token: string | null = null;
+    const cookies = req.cookies as Record<string, string>;
+    if (cookies.token) {
+      token = cookies.token;
+    } else {
+      const auth = req.headers.authorization || "";
+      const parts = auth.split(" ");
+      if (parts.length === 2 && parts[0] === "Bearer") {
+        token = parts[1];
+      }
+    }
+    if (!token) throw new ApiError(401, "Unauthorized");
+    const payload = verifyToken(token);
     if (!payload || typeof payload.sub !== "string") throw new ApiError(401, "Unauthorized");
     const doc = await UserModel.findById(payload.sub);
     if (!doc) throw new ApiError(401, "Unauthorized");
     const user = doc.toJSON() as any;
-    // Return full user object with roles
     res.json({ user });
+  } catch (err) {
+    next(err);
+  }
+};
+
+/**
+ * Logout - Clear token cookie
+ */
+export const logout = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    res.clearCookie("token", { path: "/" });
+    res.json({ message: "Logged out successfully" });
   } catch (err) {
     next(err);
   }

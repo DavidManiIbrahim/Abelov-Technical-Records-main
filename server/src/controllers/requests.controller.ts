@@ -1,6 +1,7 @@
 import type { Request, Response, NextFunction } from "express";
 import { ApiError } from "../middlewares/error";
 import { RequestSchema, RequestUpdateSchema } from "../types/request";
+import { RequestModel } from "../models/request.model";
 import {
   listRequests,
   getRequestById,
@@ -48,4 +49,23 @@ export const remove = async (req: Request, res: Response, next: NextFunction) =>
   const ok = await deleteRequest(id);
   if (!ok) return next(new ApiError(404, "Request not found"));
   res.status(204).send();
+};
+
+export const getStats = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { userId } = req.params;
+    const requests = await RequestModel.find({ user_id: userId });
+    
+    const stats = {
+      total: requests.length,
+      pending: requests.filter((r: any) => r.status === "pending").length,
+      completed: requests.filter((r: any) => r.status === "completed").length,
+      inProgress: requests.filter((r: any) => r.status === "in progress").length,
+      totalRevenue: requests.reduce((sum: number, r: any) => sum + (r.total_cost || 0), 0),
+    };
+    
+    res.json({ data: stats });
+  } catch (err) {
+    next(err);
+  }
 };

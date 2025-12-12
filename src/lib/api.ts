@@ -1,22 +1,19 @@
 import { ServiceRequest } from '@/types/database';
 import { getCache, setCache, invalidateCache } from '@/utils/storage';
 
-// Local storage keys (cache only after DB success, not persistence)
-const AUTH_TOKEN_KEY = 'auth_token';
+// Memory cache keys (in-memory cache only, no persistence)
 const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:4000/api/v1';
 
 const apiFetch = async (path: string, init?: RequestInit) => {
-  const token = getCache<string>(AUTH_TOKEN_KEY);
   const headers = {
     'Content-Type': 'application/json',
-    ...(token && { 'Authorization': `Bearer ${token}` }),
   };
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
+    credentials: 'include',
     headers: { ...headers, ...(init?.headers || {}) },
   });
   if (!res.ok) {
-    if (res.status === 401) invalidateCache(AUTH_TOKEN_KEY);
     const body = await res.json().catch(() => ({}));
     throw new Error(body?.error || `API error ${res.status}`);
   }
@@ -200,21 +197,18 @@ export const authAPI = {
       body: JSON.stringify({ email, password }),
     });
     const user = res?.user || res;
-    const token = res?.token;
-    // Cache token after successful backend login
-    if (token) setCache<string>(AUTH_TOKEN_KEY, token);
-    return { ...user, token };
+    return user;
   },
 
   async me() {
-    // Fetch current user from backend using cached token
     const res = await apiFetch('/auth/me');
     const user = res?.user || res;
     return user;
   },
 
   async logout() {
-    // Clear cached token on logout
-    invalidateCache(AUTH_TOKEN_KEY);
+    await apiFetch('/auth/logout', {
+      method: 'POST',
+    });
   },
 };

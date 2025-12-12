@@ -34,9 +34,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setUser({ id: me.id, email: me.email, roles });
           setUserRoles(roles);
         }
-      } catch {
+      } catch (err) {
         // No valid session on backend; user is logged out
-        await authAPI.logout();
+        try {
+          await authAPI.logout();
+        } catch {
+          // Logout may also fail if not authenticated, that's ok
+        }
       } finally {
         setLoading(false);
       }

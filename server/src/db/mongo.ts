@@ -1,19 +1,36 @@
-// Stubbed Mongo connection: no-op to fully disconnect DB usage when running locally
 import mongoose from "mongoose";
 import { env } from "../config/env";
+import { logger } from "../middlewares/logger";
+
+let isConnected = false;
 
 export const connectMongo = async () => {
-  // Intentionally not connecting to any external DB.
-  // Keep function for compatibility with existing startup flow.
-  // If you want to re-enable DB, restore mongoose.connect using env vars.
-  console.info('connectMongo: skipped (DB disabled)');
-  return Promise.resolve();
+  try {
+    if (isConnected) return;
+    await mongoose.connect(env.MONGODB_URI, {
+      dbName: env.MONGODB_DB_NAME,
+      minPoolSize: env.MONGODB_MIN_POOL_SIZE,
+      maxPoolSize: env.MONGODB_MAX_POOL_SIZE,
+    });
+    isConnected = true;
+    logger.info("MongoDB connected successfully");
+  } catch (err) {
+    logger.error({ err }, "Failed to connect to MongoDB");
+    throw err;
+  }
 };
 
 export const disconnectMongo = async () => {
-  console.info('disconnectMongo: skipped (DB disabled)');
-  return Promise.resolve();
+  try {
+    if (!isConnected) return;
+    await mongoose.disconnect();
+    isConnected = false;
+    logger.info("MongoDB disconnected");
+  } catch (err) {
+    logger.error({ err }, "Failed to disconnect from MongoDB");
+    throw err;
+  }
 };
 
-export const mongoState = () => 0; // 0 = disconnected
+export const mongoState = () => (isConnected ? 1 : 0);
 

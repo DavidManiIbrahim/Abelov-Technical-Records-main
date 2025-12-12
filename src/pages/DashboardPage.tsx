@@ -156,7 +156,7 @@ export default function DashboardPage() {
           <StatCard title="Completed" value={stats.completed} />
           <StatCard title="Pending" value={stats.pending} />
           <StatCard title="In Progress" value={stats.inProgress} />
-          <StatCard title="Total Revenue" value={`₦${stats.totalRevenue.toFixed(2)}`} />
+          <StatCard title="Total Revenue" value={`₦${(stats.totalRevenue || 0).toFixed(2)}`} />
         </div>
 
         {/* Search and Create */}
