@@ -76,7 +76,7 @@ export default function ServiceRequestForm() {
     } else {
       setLoading(false);
     }
-  }, [id, user?.id, isEditMode, loadRequest]);
+  }, [id, user?.id, isEditMode]);
 
   const loadRequest = useCallback(async (requestId: string) => {
     try {

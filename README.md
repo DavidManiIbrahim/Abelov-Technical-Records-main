@@ -1,14 +1,14 @@
 # Service Hub Pro
 
-A comprehensive technical service request management application for tracking device repairs and service operations with **full CRUD functionality**, **user authentication**, and **Supabase backend**.
+A comprehensive technical service request management application for tracking device repairs and service operations with **full CRUD functionality**, **secure REST API**, and a **Node.js + Express + MongoDB backend**.
 
 ## Key Features
 
 ### Authentication & User Management
-- **Secure Login/Signup** with email authentication
-- **Protected Routes** - all data is private to each user
-- **Session Management** - automatic session handling
-- **User Isolation** - each user sees only their own data
+- **Simple Login/Signup (Local)** for development
+- **Protected Routes** in frontend
+- **Session Persistence** via `localStorage`
+- Backend-ready for JWT/RBAC (can be enabled later)
 
 ### Service Request Management
 - **Create**: Add new service requests with comprehensive details
@@ -47,63 +47,67 @@ A comprehensive technical service request management application for tracking de
 - **Payment Status**: Mark payments as completed
 - **Financial Overview**: Dashboard shows total revenue and outstanding balance
 
-### Data Persistence
-- **Supabase Backend**: Cloud-based PostgreSQL database
-- **Row-Level Security**: Data encrypted and protected per user
-- **Real-Time Updates**: Instant synchronization across sessions
-- **Automatic Timestamps**: Created and updated times tracked automatically
+### Data Persistence & Backend
+- **Backend**: Node.js + Express (`server/`)
+- **Database**: MongoDB via Mongoose
+- **Indexes**: Status+created_at, customer_phone, serial_number, customer_name
+- **Optional Field Encryption**: AES-256-GCM for PII (email/phone)
+- **Health Endpoint**: `/health` reports DB readyState
+- **API Docs**: Swagger UI at `/docs`
+- **Logging**: `pino` + `pino-http`
+- **Security**: `helmet`, `cors`, compression, rate limiting
 
 ## Technology Stack
 
 - **Frontend**: React + TypeScript
 - **Styling**: Tailwind CSS + shadcn-ui components
 - **Routing**: React Router v6
-- **Backend**: Supabase (PostgreSQL)
-- **Authentication**: Supabase Auth
-- **Build Tool**: Vite
+- **Backend**: Node.js + Express + MongoDB (Mongoose)
+- **Authentication**: Local dev (storage); backend-ready for JWT
+- **Build Tool**: Vite (frontend), TypeScript (backend)
 - **UI Components**: shadcn-ui
 - **Icons**: Lucide React
 - **State Management**: React Query (TanStack Query)
-- **Data Validation**: TypeScript types
+- **Validation**: Zod (backend) + TypeScript types
 
 ## Project Structure
 
 ```
-src/
-├── pages/
-│   ├── LoginPage.tsx                  # Authentication (login/signup)
-│   ├── ServiceRequestForm.tsx         # Create/edit service requests
-│   ├── ServiceRequestViewPage.tsx     # View request details
-│   ├── DashboardPage.tsx              # Dashboard with all requests & stats
-│   └── NotFound.tsx                   # 404 error page
-├── components/
-│   ├── ProtectedRoute.tsx             # Route protection wrapper
-│   └── ui/                            # shadcn-ui components
-├── contexts/
-│   └── AuthContext.tsx                # Authentication context & provider
-├── lib/
-│   ├── supabase.ts                    # Supabase client setup
-│   └── api.ts                         # API service layer (CRUD operations)
-├── types/
-│   └── database.ts                    # TypeScript type definitions
-├── hooks/
-│   └── use-toast.ts                   # Toast notification hook
-└── main.tsx                           # Entry point
-
-Configuration Files:
-├── DATABASE_SCHEMA.sql                # Supabase SQL schema
-├── SUPABASE_SETUP.md                  # Detailed setup instructions
-├── vite.config.ts
-├── tsconfig.json
-├── tailwind.config.ts
-└── .env.example                       # Environment variables template
+service-hub-pro/
+├── src/                                # Frontend
+│   ├── pages/                          # Login, Dashboard, Form, View, NotFound
+│   ├── components/                     # UI components
+│   ├── contexts/AuthContext.tsx        # Local dev auth context
+│   ├── lib/api.ts                      # REST API client (fetch)
+│   ├── types/database.ts               # TypeScript types
+│   └── main.tsx                        # Entry point
+├── server/                             # Backend
+│   ├── src/
+│   │   ├── server.ts                   # Bootstrap
+│   │   ├── app.ts                      # Express app, middleware, routes
+│   │   ├── config/env.ts               # Env parsing & validation
+│   │   ├── db/mongo.ts                 # Mongoose connection & pooling
+│   │   ├── models/request.model.ts     # Mongoose schema & indexes
+│   │   ├── services/requests.service.ts# CRUD with MongoDB
+│   │   ├── controllers/requests.controller.ts
+│   │   ├── routes/requests.routes.ts   # REST endpoints
+│   │   ├── middlewares/*               # logger, rateLimit, error
+│   │   └── docs/swagger.ts             # Swagger spec
+│   ├── tests/                          # Vitest + supertest
+│   │   ├── requests.int.test.ts        # Integration tests
+│   │   ├── requests.unit.test.ts       # Unit tests
+│   │   └── setup.ts                    # mongodb-memory-server
+│   ├── .env.example                    # Backend env template
+│   └── package.json                    # Backend scripts & deps
+├── vite.config.ts                      # Frontend config
+└── README.md                           # This documentation
 ```
 
 ## Quick Start
 
 ### Prerequisites
-- Node.js 16+ and npm
-- Supabase account (free at https://supabase.com)
+- Node.js 18+ and npm
+- MongoDB (local or Atlas)
 
 ### Setup Instructions
 
@@ -116,28 +120,39 @@ Configuration Files:
 2. **Install dependencies**
    ```bash
    npm install
+   cd server && npm install
    ```
 
-3. **Configure Supabase**
-   - Create a Supabase project
-   - Copy `.env.example` to `.env.local`
-   - Add your Supabase URL and Anon Key
-   - See `SUPABASE_SETUP.md` for detailed instructions
-
-4. **Set up database**
-   - Run the SQL from `DATABASE_SCHEMA.sql` in Supabase SQL Editor
-   - This creates all necessary tables with Row-Level Security
-
-5. **Start development server**
+3. **Configure Backend**
    ```bash
-   npm run dev
+   cd server
+   copy .env.example .env
+   # set values in .env
+   MONGODB_URI=mongodb://localhost:27017
+   MONGODB_DB_NAME=technical_records
+   MONGODB_MIN_POOL_SIZE=5
+   MONGODB_MAX_POOL_SIZE=20
+   FIELD_ENCRYPTION_KEY=<32-byte hex key>
+   ```
+
+4. **Start Servers**
+   ```bash
+   # backend
+   cd server && npm run dev
+   # frontend (in another terminal)
+   cd .. && npm run dev
+   ```
+
+5. **Optional Frontend Config**
+   - Create `.env.local` in project root:
+   ```
+   VITE_API_BASE_URL=http://localhost:4000/api/v1
    ```
 
 6. **Open in browser**
    - Navigate to `http://localhost:5173`
-   - Create account or login
 
-## Routes
+## Routes (Frontend)
 
 - `/login` - Authentication page (login/signup)
 - `/` - Create new service request (protected)
@@ -176,9 +191,20 @@ Configuration Files:
    - Request ID
    - Status
 
-## API Reference
+## API Reference (Backend)
 
-All CRUD operations are available through the `serviceRequestAPI`:
+Base URL: `http://localhost:4000/api/v1`
+
+Endpoints:
+- `GET /requests` — list all requests
+- `POST /requests` — create a request
+- `GET /requests/:id` — get by id
+- `PUT /requests/:id` — update by id
+- `DELETE /requests/:id` — delete by id
+- `GET /health` — service and DB status
+- `GET /docs` — Swagger UI
+
+Frontend `serviceRequestAPI` calls these endpoints:
 
 ```typescript
 // Create
@@ -208,43 +234,55 @@ serviceRequestAPI.getStats(userId: string)
 
 ## Authentication
 
-The app uses Supabase Authentication with:
-- Email-based login/signup
-- Automatic session management
-- Protected routes that redirect to login
-- User context available throughout the app
+- Development: local login/signup with `localStorage`
+- Future: enable JWT-based auth and role checks in the backend
 
-## Database Security
+## Security & Best Practices
 
-All data is protected by:
-- **Row-Level Security (RLS)**: Each user sees only their data
-- **User Isolation**: Queries automatically filtered by user ID
-- **Timestamps**: Automatic created_at and updated_at tracking
-- **Constraints**: Data validation at database level
+- **Helmet**: secure HTTP headers
+- **CORS**: restricted origins (configurable)
+- **Rate Limiting**: applied to `/api/*`
+- **Compression**: gzip responses
+- **Logging**: structured logs with `pino`
+- **Input Validation**: Zod schemas for payloads
+- **Encryption (optional)**: AES-256-GCM on sensitive fields
 
 ## Environment Variables
 
-Create `.env.local` with:
+### Frontend
 ```
-VITE_SUPABASE_URL=your_project_url
-VITE_SUPABASE_ANON_KEY=your_anon_key
+VITE_API_BASE_URL=http://localhost:4000/api/v1
 ```
 
-## Build & Deployment
+### Backend (`server/.env`)
+```
+NODE_ENV=development
+PORT=4000
+CORS_ORIGIN=http://localhost:5173
+RATE_LIMIT_WINDOW_MS=60000
+RATE_LIMIT_MAX=100
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB_NAME=technical_records
+MONGODB_MIN_POOL_SIZE=5
+MONGODB_MAX_POOL_SIZE=20
+FIELD_ENCRYPTION_KEY=<32-byte hex key>
+```
 
-### Build for production
+## Build, Test & Deployment
+
+### Frontend
 ```bash
 npm run build
-```
-
-### Preview production build
-```bash
 npm run preview
+npm run lint
 ```
 
-### Linting
+### Backend
 ```bash
-npm run lint
+cd server
+npm run build
+npm start
+npm test
 ```
 
 ## Recommended Features to Add
@@ -278,9 +316,11 @@ npm run lint
 
 ## Support & Documentation
 
-- **Supabase Docs**: https://supabase.com/docs
-- **React Docs**: https://react.dev
-- **TypeScript Docs**: https://www.typescriptlang.org/docs
+- **Express**: https://expressjs.com/
+- **Mongoose**: https://mongoosejs.com/
+- **Swagger/OpenAPI**: https://swagger.io/
+- **React**: https://react.dev
+- **TypeScript**: https://www.typescriptlang.org/docs
 - **Tailwind CSS**: https://tailwindcss.com/docs
 - **shadcn-ui**: https://ui.shadcn.com
 
@@ -294,18 +334,20 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Changelog
 
-### v2.0.0 (Current)
-- ✅ Added Supabase backend integration
-- ✅ Implemented user authentication (login/signup)
-- ✅ Created full CRUD operations
-- ✅ Built comprehensive dashboard with statistics
-- ✅ Converted tabbed form to single-page layout
-- ✅ Added protected routes
-- ✅ Implemented Row-Level Security
-- ✅ Added advanced search and filtering
+### v3.0.0 (Current)
+- ✅ Migrated backend to Node.js + Express + MongoDB
+- ✅ Added RESTful API with controllers/services/routes
+- ✅ Implemented security: helmet, cors, compression, rate limiting
+- ✅ Added structured logging with pino
+- ✅ Added Swagger docs at `/docs`
+- ✅ Added health endpoint with DB status
+- ✅ Frontend now calls REST API (`VITE_API_BASE_URL`)
+- ✅ Simplified dev auth with local storage
+- ✅ Unit & integration tests for backend
+
+### v2.0.0
+- ✅ Supabase backend integration and authentication
+- ✅ Dashboard statistics and single-page form layout
 
 ### v1.0.0
 - ✅ Initial release with local storage
-- ✅ Tabbed service request form
-- ✅ Basic CRUD operations
-- ✅ Service request list view

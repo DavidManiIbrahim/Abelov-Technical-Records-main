@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-type Session = { user: { id: string; email: string } } | null;
-type User = { id: string; email: string } | null;
-import { convex } from '@/lib/convexClient';
-type SignInResult = { user: { id: string; email: string }; roles: string[] };
+import { authAPI } from '@/lib/api';
+
+type Session = { user: { id: string; email: string; roles?: string[] } } | null;
+type User = { id: string; email: string; roles?: string[] } | null;
 
 interface AuthContextType {
   session: Session | null;
@@ -23,41 +23,45 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [userRoles, setUserRoles] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchUserRoles = async (userId: string) => {
-    try {
-      const roles = await convex.query('users:getRoles', { userId });
-      const list = (roles as Array<{ role: string }> | null)?.map((r) => r.role) || [];
-      setUserRoles(list);
-    } catch (err) {
-      console.error('Failed to fetch user roles:', err);
-      setUserRoles([]);
-    }
-  };
-
+  // On app load, restore session from backend (not localStorage)
   useEffect(() => {
-    setLoading(false);
+    (async () => {
+      try {
+        const me = await authAPI.me();
+        if (me && me.id) {
+          const roles = (me.roles as string[]) || [];
+          setSession({ user: { id: me.id, email: me.email, roles } });
+          setUser({ id: me.id, email: me.email, roles });
+          setUserRoles(roles);
+        }
+      } catch {
+        // No valid session on backend; user is logged out
+        await authAPI.logout();
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
 
   const signUp = async (email: string, password: string, userType: 'user' | 'admin' = 'user') => {
-    const user = await convex.mutation('users:signUp', { email, password, role: userType });
-    setSession({ user });
-    setUser(user);
-    await fetchUserRoles(user.id);
+    const user = await authAPI.signup(email, password, userType);
+    // After signup, user must login separately
+    return user;
   };
 
   const signIn = async (email: string, password: string) => {
     try {
-      const res = await convex.query('users:signIn', { email, password });
-      const { user: u, roles } = res as SignInResult;
-      setSession({ user: u });
-      setUser(u);
-      setUserRoles(roles || []);
-    } catch (e) {
-      if (e?.message?.includes('Invalid')) {
-        throw new Error('Invalid email or password. Please check and try again.');
+      const result = await authAPI.login(email, password);
+      if (!result || !result.id) {
+        throw new Error('Invalid credentials');
       }
-      const msg = e instanceof Error ? e.message : 'Failed to sign in';
-      throw new Error(msg);
+      const roles = (result.roles as string[]) || [];
+      setSession({ user: { id: result.id, email: result.email, roles } });
+      setUser({ id: result.id, email: result.email, roles });
+      setUserRoles(roles);
+    } catch (err) {
+      await authAPI.logout();
+      throw err;
     }
   };
 
@@ -65,6 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setSession(null);
     setUser(null);
     setUserRoles([]);
+    await authAPI.logout();
   };
 
   return (
