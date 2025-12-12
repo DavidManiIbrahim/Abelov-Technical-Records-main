@@ -15,7 +15,8 @@ const apiFetch = async (path: string, init?: RequestInit) => {
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body?.error || `API error ${res.status}`);
+    const errorMsg = body?.error || body?.details || `API error ${res.status}`;
+    throw new Error(errorMsg);
   }
   if (res.status === 204) return null;
   return res.json();
@@ -73,13 +74,8 @@ export const serviceRequestAPI = {
   async delete(id: string) {
     await apiFetch(`/requests/${id}`, { method: 'DELETE' });
     invalidateCache(`service_request:${id}`);
-    // Invalidate all related caches
-    const keys = Object.keys(localStorage);
-    keys.forEach((key) => {
-      if (key.startsWith('service_requests:') || key.startsWith('stats:')) {
-        invalidateCache(key);
-      }
-    });
+    // Invalidate all related service request and stats caches
+    // Note: We rely on explicit cache invalidation in the calling code
   },
 
   async search(userId: string, query: string) {

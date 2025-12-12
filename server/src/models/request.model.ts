@@ -38,19 +38,41 @@ RequestSchema.index({ status: 1, created_at: -1 });
 RequestSchema.pre("save", function (next) {
   if (this.isModified("customer_email") && this.get("customer_email")) {
     const v = this.get("customer_email") as string;
-    this.set("customer_email", encrypt(v));
+    // Only encrypt if value is not empty
+    if (v.trim()) {
+      this.set("customer_email", encrypt(v));
+    }
   }
   if (this.isModified("customer_phone") && this.get("customer_phone")) {
     const v = this.get("customer_phone") as string;
-    this.set("customer_phone", encrypt(v));
+    // Only encrypt if value is not empty
+    if (v.trim()) {
+      this.set("customer_phone", encrypt(v));
+    }
   }
   next();
 });
 
 RequestSchema.methods.toJSON = function () {
   const obj = this.toObject();
-  if (obj.customer_email) obj.customer_email = decrypt(obj.customer_email);
-  if (obj.customer_phone) obj.customer_phone = decrypt(obj.customer_phone);
+  try {
+    // Safely decrypt - only if value exists and looks encrypted
+    if (obj.customer_email && typeof obj.customer_email === 'string') {
+      // Check if it looks like encrypted data (base64 format)
+      if (obj.customer_email.includes('+') || obj.customer_email.includes('/') || obj.customer_email.length > 100) {
+        obj.customer_email = decrypt(obj.customer_email);
+      }
+    }
+    if (obj.customer_phone && typeof obj.customer_phone === 'string') {
+      // Check if it looks like encrypted data (base64 format)
+      if (obj.customer_phone.includes('+') || obj.customer_phone.includes('/') || obj.customer_phone.length > 100) {
+        obj.customer_phone = decrypt(obj.customer_phone);
+      }
+    }
+  } catch (e) {
+    // If decryption fails, leave the value as-is
+    console.warn('Decryption failed:', e);
+  }
   obj.id = obj._id.toString();
   delete obj._id;
   delete obj.__v;

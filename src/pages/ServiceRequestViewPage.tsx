@@ -25,12 +25,6 @@ export default function ServiceRequestViewPage() {
   const [request, setRequest] = useState<ServiceRequest | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (id) {
-      loadRequest(id);
-    }
-  }, [id, loadRequest]);
-
   const loadRequest = useCallback(async (requestId: string) => {
     try {
       const data = await serviceRequestAPI.getById(requestId);
@@ -46,6 +40,12 @@ export default function ServiceRequestViewPage() {
       setLoading(false);
     }
   }, [navigate]);
+
+  useEffect(() => {
+    if (id) {
+      loadRequest(id);
+    }
+  }, [id, loadRequest]);
 
   if (loading) {
     return (
@@ -343,7 +343,7 @@ export default function ServiceRequestViewPage() {
             </div>
 
             {/* Timeline */}
-            {request.repair_timeline.length > 0 && (
+            {request.repair_timeline && request.repair_timeline.length > 0 && (
               <div className="print-hide mb-6 pb-6 border-b print-section-break">
                 <h3 className="text-lg font-semibold mb-3 text-primary">Timeline</h3>
                 <div className="space-y-3">
@@ -374,6 +374,7 @@ export default function ServiceRequestViewPage() {
             )}
 
             {/* Customer Confirmation */}
+            {request.customer_confirmation && (
             <div className="print-hide pb-6 print-section-break">
               <h3 className="text-lg font-semibold mb-3 text-primary">Confirmation</h3>
               <div className="grid grid-cols-2 gap-4">
@@ -385,6 +386,7 @@ export default function ServiceRequestViewPage() {
                 </div>
               </div>
             </div>
+            )}
 
             {/* Timestamps - Hide on Print */}
             <div className="print-hide text-xs text-muted-foreground mt-6 pt-4 border-t">

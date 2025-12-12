@@ -82,11 +82,16 @@ export default function ServiceRequestForm() {
     try {
       const request = await serviceRequestAPI.getById(requestId);
       setFormData(request);
-      setTimelineSteps(request.repair_timeline.length > 0 ? request.repair_timeline : [{ step: '', date: '', note: '', status: '' }]);
-    } catch {
+      setTimelineSteps(
+        request.repair_timeline && request.repair_timeline.length > 0 
+          ? request.repair_timeline 
+          : [{ step: '', date: '', note: '', status: '' }]
+      );
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Failed to load request';
       toast({
         title: 'Error',
-        description: 'Failed to load request',
+        description: errorMsg,
         variant: 'destructive',
       });
       navigate('/dashboard');
