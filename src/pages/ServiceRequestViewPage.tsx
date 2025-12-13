@@ -95,34 +95,101 @@ export default function ServiceRequestViewPage() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
       <style>{`
-        @media print {
-          @page {
-            size: 8.5in 11in;
-            margin: 0.5in;
-          }
-          body {
-            margin: 0;
-            padding: 0;
-            background: white;
-          }
-          .print-hide {
-            display: none !important;
-          }
-          .print-show {
-            display: block !important;
-          }
-          .print-content {
-            box-shadow: none !important;
-            border: none !important;
-            page-break-inside: avoid;
-          }
-          .print-section-break {
-            page-break-inside: avoid;
-            margin-bottom: 20px;
-          }
-        }
-      `}</style>
+  @media print {
+    /* 1. LAYOUT RESET - CRITICAL FIX */
+    /* Forces the content to flow naturally from the top, disabling screen centering */
+    html, body, #root, .min-h-screen {
+      width: 100% !important;
+      height: auto !important;
+      min-height: 0 !important;
+      display: block !important;
+      position: static !important;
+      overflow: visible !important;
+    }
+
+    @page {
+      size: auto; /* Let the printer determine size, or use 8.5in 11in */
+      margin: 0mm; /* Remove browser header/footer text */
+    }
+
+    body {
+      margin: 0 !important;
+      padding: 0.5cm !important; /* Add slight padding so text doesn't hit edge */
+      background: white;
+    }
+
+    /* Reset all elements to avoid hidden margins */
+    * {
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+    }
+
+    /* 2. TYPOGRAPHY SCALING */
+    /* Adjusted sizes to be more reasonable for paper (36px is very large for print body text) */
+    h1 {
+      font-size: 24pt !important;
+      margin-bottom: 8pt !important;
+      font-weight: 800 !important;
+      color: #000 !important;
+    }
+    h2, h3 {
+      font-size: 18pt !important;
+      margin-top: 12pt !important;
+      margin-bottom: 6pt !important;
+      font-weight: 700 !important;
+      color: #000 !important;
+    }
+    p, .text-sm, .text-xs, span, div {
+      font-size: 11pt !important; /* Standard readable print size */
+      line-height: 1.4 !important;
+      color: #000 !important;
+    }
+    
+    /* 3. VISIBILITY CONTROLS */
+    .print-hide {
+      display: none !important;
+    }
+    .print-show {
+      display: block !important;
+    }
+    
+    /* 4. CARD STYLING REMOVAL */
+    /* Flattens the card look for paper */
+    .print-content {
+      width: 100% !important;
+      max-width: none !important;
+      box-shadow: none !important;
+      border: none !important;
+      margin: 0 !important;
+    }
+    
+    /* Target the Card component specifically if it has a border */
+    .rounded-xl, .border, .shadow-sm {
+      border: none !important;
+      box-shadow: none !important;
+      border-radius: 0 !important;
+    }
+
+    /* 5. GRID & LAYOUT FIXES */
+    .grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr) !important; /* Force 2 columns for data */
+      gap: 12pt !important;
+    }
+    /* Stack small grids if needed */
+    .md\\:grid-cols-4 {
+      grid-template-columns: repeat(2, 1fr) !important;
+    }
       
+
+    /* Avoid breaking elements in half across pages */
+    .print-section-break {
+      page-break-inside: avoid;
+      margin-bottom: 16pt !important;
+    }
+  }
+`}</style>
       <div className="max-w-4xl mx-auto">
         {/* Header - Hide on Print */}
         <div className="print-hide mb-8 flex items-center justify-between">
@@ -172,8 +239,8 @@ export default function ServiceRequestViewPage() {
           {/* Unified Form - All Sections in One */}
           <Card className="p-6">
             {/* Request Header */}
-            <div className="mb-6 pb-6 border-b">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="mb-6 pb-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <DetailRow label="Request ID" value={request.id} />
                 </div>
@@ -190,9 +257,9 @@ export default function ServiceRequestViewPage() {
             </div>
 
             {/* Customer Information */}
-            <div className="mb-6 pb-6 border-b print-section-break">
+            <div className="mb-6 pb-6 print-section-break">
               <h3 className="text-lg font-semibold mb-3 text-primary">Customer</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <DetailRow label="Name" value={request.customer_name} />
                 </div>
@@ -206,9 +273,9 @@ export default function ServiceRequestViewPage() {
             </div>
 
             {/* Device Information */}
-            <div className="mb-6 pb-6 border-b print-section-break">
+            <div className="mb-6 pb-6 print-section-break">
               <h3 className="text-lg font-semibold mb-3 text-primary">Device</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <DetailRow label="Brand" value={request.device_brand} />
                 </div>
@@ -230,14 +297,14 @@ export default function ServiceRequestViewPage() {
             </div>
 
             {/* Problem Description */}
-            <div className="mb-6 pb-6 border-b print-section-break">
+            <div className="mb-6 pb-6 print-section-break">
               <h3 className="text-lg font-semibold mb-3 text-primary">Problem</h3>
               <p className="text-sm whitespace-pre-wrap">{request.problem_description}</p>
             </div>
 
             {/* Diagnosis & Repair */}
             {(request.fault_found || request.parts_used || request.repair_action) && (
-              <div className="print-hide mb-6 pb-6 border-b print-section-break">
+              <div className="print-hide mb-6 pb-6 print-section-break">
                 <h3 className="text-lg font-semibold mb-3 text-primary">Diagnosis & Repair</h3>
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   {request.diagnosis_date && (
@@ -273,9 +340,9 @@ export default function ServiceRequestViewPage() {
             )}
 
             {/* Cost Summary */}
-            <div className="print-hide mb-6 pb-6 border-b print-section-break">
+            <div className="print-hide mb-6 pb-6 print-section-break">
               <h3 className="text-lg font-semibold mb-3 text-primary">Costs</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <DetailRow label="Service" value={`₦${request.service_charge.toFixed(2)}`} />
                 </div>
@@ -299,7 +366,7 @@ export default function ServiceRequestViewPage() {
 
             {/* Timeline */}
             {request.repair_timeline && request.repair_timeline.length > 0 && (
-              <div className="print-hide mb-6 pb-6 border-b print-section-break">
+              <div className="print-hide mb-6 pb-6 print-section-break">
                 <h3 className="text-lg font-semibold mb-3 text-primary">Timeline</h3>
                 <div className="space-y-3">
                   {request.repair_timeline.map((step, index) => (
