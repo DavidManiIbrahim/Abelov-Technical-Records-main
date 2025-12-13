@@ -79,7 +79,8 @@ localStorage.removeItem(key);
 **NEW:** Auto-token injection and authAPI
 ```typescript
 const AUTH_TOKEN_KEY = 'auth_token'; // Cache only, not persistence
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:4000/api/v1';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'https://abelov-technical-records-backend.onrender.com
+/api/v1';
 
 const apiFetch = async (path: string, init?: RequestInit) => {
   // Auto-inject token from cache
