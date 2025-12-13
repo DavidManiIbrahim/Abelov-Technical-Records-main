@@ -402,45 +402,42 @@ export default function AdminDashboard() {
                         <TableRow className="bg-muted/50">
                           <TableHead className="text-xs font-semibold">Email</TableHead>
                           <TableHead className="text-xs font-semibold">Name</TableHead>
-                          <TableHead className="text-xs font-semibold">Company</TableHead>
                           <TableHead className="text-xs font-semibold">Tickets</TableHead>
                           <TableHead className="text-xs font-semibold">Revenue</TableHead>
                           <TableHead className="text-xs font-semibold">Status</TableHead>
-                          <TableHead className="text-xs font-semibold">Joined</TableHead>
                           <TableHead className="text-xs font-semibold">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {users.length === 0 ? (
                           <TableRow>
-                            <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                            <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                               No users found
                             </TableCell>
                           </TableRow>
                         ) : (
-                          users.map((u: UserData) => (
-                            <TableRow key={u.id} className="hover:bg-muted/50 transition-colors">
-                              <TableCell className="text-sm">{u.email}</TableCell>
-                              <TableCell className="text-sm">{u.full_name || '-'}</TableCell>
-                              <TableCell className="text-sm text-muted-foreground">{u.company_name || '-'}</TableCell>
-                              <TableCell className="text-sm font-semibold">{u.ticketCount}</TableCell>
-                              <TableCell className="text-sm font-semibold">₦{u.totalRevenue?.toFixed(0) || '0'}</TableCell>
-                              <TableCell>
-                                <Badge variant={u.is_active ? 'default' : 'secondary'}>
-                                  {u.is_active ? 'Active' : 'Inactive'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell className="text-sm text-muted-foreground">
-                                {new Date(u.created_at).toLocaleDateString()}
-                              </TableCell>
-                              <TableCell>
-                                <Button onClick={() => handleDeleteUser(u.id)} variant="destructive" size="sm">
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
-                                </Button>
-                              </TableCell>
-                            </TableRow>
-                          ))
+                          users.map((u: UserData) => {
+                            const nameFromEmail = u.email.split('@')[0];
+                            return (
+                              <TableRow key={u.id} className="hover:bg-muted/50 transition-colors">
+                                <TableCell className="text-sm">{u.email}</TableCell>
+                                <TableCell className="text-sm font-medium">{nameFromEmail}</TableCell>
+                                <TableCell className="text-sm font-semibold">{u.ticketCount}</TableCell>
+                                <TableCell className="text-sm font-semibold">₦{u.totalRevenue?.toFixed(0) || '0'}</TableCell>
+                                <TableCell>
+                                  <Badge variant={u.is_active ? 'default' : 'secondary'}>
+                                    {u.is_active ? 'Active' : 'Inactive'}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Button onClick={() => handleDeleteUser(u.id)} variant="destructive" size="sm">
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                    Delete
+                                  </Button>
+                                </TableCell>
+                              </TableRow>
+                            );
+                          })
                         )}
                       </TableBody>
                     </Table>
