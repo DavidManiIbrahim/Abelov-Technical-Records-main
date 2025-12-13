@@ -2,8 +2,7 @@ import { ServiceRequest } from '@/types/database';
 import { getCache, setCache, invalidateCache } from '@/utils/storage';
 
 // Memory cache keys (in-memory cache only, no persistence)
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'https://abelov-technical-records-backend.onrender.com
-/api/v1';
+const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'https://abelov-technical-records-backend.onrender.com/api/v1';
 
 const apiFetch = async (path: string, init?: RequestInit) => {
   const headers = {
