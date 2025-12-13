@@ -4,7 +4,8 @@ import { logger } from "./middlewares/logger";
 import { connectMongo } from "./db/mongo";
 
 const app = createApp();
-const port = env.PORT;
+const port = Number(process.env.PORT) || env.PORT || 4000;
+
 
 const start = async () => {
   try {
