@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { serviceRequestAPI } from '@/lib/api';
 import { ServiceRequest } from '@/types/database';
-import { Plus, LogOut, Search, Edit, Eye, Trash2, BarChart3, Shield } from 'lucide-react';
+import { Plus, Search, Edit, Eye, Trash2, BarChart3, Shield } from 'lucide-react';
+import ProfileMenu from '@/components/ProfileMenu';
 import abelovLogo from '@/assets/abelov-logo.png';
 
 export default function DashboardPage() {
@@ -74,15 +75,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut();
-      navigate('/login');
-    } catch (error) {
-      console.error('Logout error:', error);
-    }
-  };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Completed':
@@ -118,7 +110,7 @@ export default function DashboardPage() {
               <p className="text-sm text-muted-foreground">{user?.email}</p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 items-center">
             <Button onClick={() => navigate('/analytics')} variant="outline" className="md:flex hidden">
               <BarChart3 className="w-4 h-4 mr-2" />
               Analytics
@@ -137,13 +129,7 @@ export default function DashboardPage() {
                 </Button>
               </>
             )}
-            <Button onClick={handleLogout} variant="destructive" className="md:flex hidden">
-              <LogOut className="w-4 h-4 mr-2" />
-              Logout
-            </Button>
-            <Button onClick={handleLogout} variant="destructive" className="md:hidden">
-              <LogOut className="w-4 h-4" />
-            </Button>
+            <ProfileMenu />
           </div>
         </div>
       </div>
