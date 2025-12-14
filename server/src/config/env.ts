@@ -19,8 +19,8 @@ const EnvSchema = z.object({
     .string()
     .transform((v) => Number(v))
     .default("100"),
-  MONGODB_URI: z.string().min(1).default("mongodb://localhost:27017"),
-  MONGODB_DB_NAME: z.string().min(1).default("technical_records"),
+  MONGODB_URI: z.string().min(1).default("mongodb+srv://itzlimincj_db_user:0vuy1Ij7g1dLlg8s@cluster0.xf141ou.mongodb.net/armsdb?appName=Cluster0"),
+  MONGODB_DB_NAME: z.string().min(1).default("armsdb"),
   MONGODB_MIN_POOL_SIZE: z.string().transform((v) => Number(v)).default("5"),
   MONGODB_MAX_POOL_SIZE: z.string().transform((v) => Number(v)).default("20"),
   FIELD_ENCRYPTION_KEY: z.string().min(32).optional(),

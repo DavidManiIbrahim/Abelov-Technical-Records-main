@@ -146,7 +146,8 @@ service-hub-pro/
 5. **Optional Frontend Config**
    - Create `.env.local` in project root:
    ```
-   VITE_API_BASE_URL=http://localhost:4000/api/v1
+   VITE_API_BASE_URL=https://abelov-technical-records-backend.onrender.com
+/api/v1
    ```
 
 6. **Open in browser**
@@ -193,7 +194,8 @@ service-hub-pro/
 
 ## API Reference (Backend)
 
-Base URL: `http://localhost:4000/api/v1`
+Base URL: `https://abelov-technical-records-backend.onrender.com
+/api/v1`
 
 Endpoints:
 - `GET /requests` — list all requests
@@ -251,7 +253,8 @@ serviceRequestAPI.getStats(userId: string)
 
 ### Frontend
 ```
-VITE_API_BASE_URL=http://localhost:4000/api/v1
+VITE_API_BASE_URL=https://abelov-technical-records-backend.onrender.com
+/api/v1
 ```
 
 ### Backend (`server/.env`)
