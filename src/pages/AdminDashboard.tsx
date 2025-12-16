@@ -212,54 +212,81 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto space-y-8">
           {/* Global Stats */}
           {globalStats && (
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-              <Card className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Total Users</p>
-                    <p className="text-3xl font-bold text-primary mt-2">{globalStats.totalUsers}</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Total Users */}
+              <Card className="p-6 bg-gradient-to-br from-blue-50 to-blue-50 border-blue-200">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-600">Total Users</p>
+                    <Users className="w-5 h-5 text-blue-600" />
                   </div>
-                  <Users className="w-8 h-8 text-muted-foreground opacity-50" />
+                  <p className="text-3xl font-bold text-blue-700">{globalStats.totalUsers}</p>
+                  <p className="text-xs text-gray-500">Active user accounts in system</p>
                 </div>
               </Card>
 
-              <Card className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Total Tickets</p>
-                    <p className="text-3xl font-bold text-primary mt-2">{globalStats.totalTickets}</p>
+              {/* Total Tickets */}
+              <Card className="p-6 bg-gradient-to-br from-purple-50 to-purple-50 border-purple-200">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-600">Total Tickets</p>
+                    <Ticket className="w-5 h-5 text-purple-600" />
                   </div>
-                  <Ticket className="w-8 h-8 text-muted-foreground opacity-50" />
+                  <p className="text-3xl font-bold text-purple-700">{globalStats.totalTickets}</p>
+                  <p className="text-xs text-gray-500">Total service requests</p>
                 </div>
               </Card>
 
-              <Card className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Pending</p>
-                    <p className="text-3xl font-bold text-yellow-600 mt-2">{globalStats.pendingTickets}</p>
+              {/* Completed */}
+              <Card className="p-6 bg-gradient-to-br from-green-50 to-green-50 border-green-200">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-600">Completed</p>
+                    <TrendingUp className="w-5 h-5 text-green-600" />
                   </div>
-                  <Activity className="w-8 h-8 text-muted-foreground opacity-50" />
+                  <p className="text-3xl font-bold text-green-700">{globalStats.completedTickets}</p>
+                  <div className="flex items-center justify-between pt-1">
+                    <p className="text-xs text-gray-500">Finished requests</p>
+                    <span className="text-xs font-semibold text-green-600">
+                      {globalStats.totalTickets > 0 ? Math.round((globalStats.completedTickets / globalStats.totalTickets) * 100) : 0}%
+                    </span>
+                  </div>
                 </div>
               </Card>
 
-              <Card className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Completed</p>
-                    <p className="text-3xl font-bold text-green-600 mt-2">{globalStats.completedTickets}</p>
+              {/* Pending */}
+              <Card className="p-6 bg-gradient-to-br from-yellow-50 to-yellow-50 border-yellow-200">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-600">Pending</p>
+                    <Activity className="w-5 h-5 text-yellow-600" />
                   </div>
-                  <TrendingUp className="w-8 h-8 text-muted-foreground opacity-50" />
+                  <p className="text-3xl font-bold text-yellow-700">{globalStats.pendingTickets}</p>
+                  <p className="text-xs text-gray-500">Awaiting start</p>
                 </div>
               </Card>
 
-              <Card className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-muted-foreground">Total Revenue</p>
-                    <p className="text-3xl font-bold text-primary mt-2">₦{globalStats.totalRevenue.toFixed(0)}</p>
+              {/* In Progress */}
+              <Card className="p-6 bg-gradient-to-br from-blue-50 to-cyan-50 border-cyan-200">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-600">In Progress</p>
+                    <Loader2 className="w-5 h-5 text-cyan-600" />
                   </div>
-                  <TrendingUp className="w-8 h-8 text-muted-foreground opacity-50" />
+                  <p className="text-3xl font-bold text-cyan-700">{globalStats.inProgressTickets}</p>
+                  <p className="text-xs text-gray-500">Currently being worked on</p>
+                </div>
+              </Card>
+
+              {/* Total Revenue */}
+              <Card className="p-6 bg-gradient-to-br from-emerald-50 to-emerald-50 border-emerald-200">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-600">Total Revenue</p>
+                    <TrendingUp className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <p className="text-3xl font-bold text-emerald-700">₦{(globalStats.totalRevenue / 1000000).toFixed(1)}M</p>
+                  <p className="text-xs text-gray-500">Total earnings</p>
                 </div>
               </Card>
             </div>

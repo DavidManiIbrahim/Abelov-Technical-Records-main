@@ -65,6 +65,27 @@ export default function AnalyticsDashboard() {
     { status: 'On-Hold', count: requests.filter(r => r.status === 'On-Hold').length },
   ].filter(item => item.count > 0);
 
+  // Work done by technician (requests handled per month)
+  const technicianWorkChart = requests.reduce((acc, req) => {
+    const month = new Date(req.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    const existing = acc.find(item => item.month === month);
+    if (existing) {
+      existing.completed += req.status === 'Completed' ? 1 : 0;
+      existing.inProgress += req.status === 'In-Progress' ? 1 : 0;
+      existing.pending += req.status === 'Pending' ? 1 : 0;
+      existing.total += 1;
+    } else {
+      acc.push({
+        month,
+        completed: req.status === 'Completed' ? 1 : 0,
+        inProgress: req.status === 'In-Progress' ? 1 : 0,
+        pending: req.status === 'Pending' ? 1 : 0,
+        total: 1,
+      });
+    }
+    return acc;
+  }, [] as { month: string; completed: number; inProgress: number; pending: number; total: number }[]);
+
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
 
   const totalRevenue = requests.reduce((sum, r) => sum + (r.payment_completed ? (r.total_cost || 0) : (r.deposit_paid || 0)), 0);
@@ -153,6 +174,23 @@ export default function AnalyticsDashboard() {
               <Legend />
               <Line type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} name="Revenue" />
             </LineChart>
+          </ResponsiveContainer>
+        </Card>
+
+        {/* Technician Work Done */}
+        <Card className="p-6 mb-8">
+          <h2 className="text-xl font-bold mb-4 text-primary">Technician Work Performed</h2>
+          <ResponsiveContainer width="100%" height={350}>
+            <BarChart data={technicianWorkChart}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="month" />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="completed" stackId="a" fill="#10b981" name="Completed" />
+              <Bar dataKey="inProgress" stackId="a" fill="#3b82f6" name="In-Progress" />
+              <Bar dataKey="pending" stackId="a" fill="#f59e0b" name="Pending" />
+            </BarChart>
           </ResponsiveContainer>
         </Card>
 
