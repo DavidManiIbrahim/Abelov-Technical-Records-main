@@ -65,10 +65,10 @@ export default function AnalyticsDashboard() {
     { status: 'On-Hold', count: requests.filter(r => r.status === 'On-Hold').length },
   ].filter(item => item.count > 0);
 
-  // Work done by technician (requests handled per month)
-  const technicianWorkChart = requests.reduce((acc, req) => {
-    const month = new Date(req.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-    const existing = acc.find(item => item.month === month);
+  // Technician work histogram
+  const technicianWork = requests.reduce((acc, req) => {
+    const tech = req.technician_name || 'Unassigned';
+    const existing = acc.find(item => item.technician === tech);
     if (existing) {
       existing.completed += req.status === 'Completed' ? 1 : 0;
       existing.inProgress += req.status === 'In-Progress' ? 1 : 0;
@@ -76,7 +76,7 @@ export default function AnalyticsDashboard() {
       existing.total += 1;
     } else {
       acc.push({
-        month,
+        technician: tech,
         completed: req.status === 'Completed' ? 1 : 0,
         inProgress: req.status === 'In-Progress' ? 1 : 0,
         pending: req.status === 'Pending' ? 1 : 0,
@@ -84,7 +84,7 @@ export default function AnalyticsDashboard() {
       });
     }
     return acc;
-  }, [] as { month: string; completed: number; inProgress: number; pending: number; total: number }[]);
+  }, [] as { technician: string; completed: number; inProgress: number; pending: number; total: number }[]);
 
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
 
@@ -177,23 +177,6 @@ export default function AnalyticsDashboard() {
           </ResponsiveContainer>
         </Card>
 
-        {/* Technician Work Done */}
-        <Card className="p-6 mb-8">
-          <h2 className="text-xl font-bold mb-4 text-primary">Technician Work Performed</h2>
-          <ResponsiveContainer width="100%" height={350}>
-            <BarChart data={technicianWorkChart}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="month" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="completed" stackId="a" fill="#10b981" name="Completed" />
-              <Bar dataKey="inProgress" stackId="a" fill="#3b82f6" name="In-Progress" />
-              <Bar dataKey="pending" stackId="a" fill="#f59e0b" name="Pending" />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Device Type Breakdown */}
           <Card className="p-6">
@@ -234,6 +217,27 @@ export default function AnalyticsDashboard() {
             </ResponsiveContainer>
           </Card>
         </div>
+
+        {/* Technician Work Histogram */}
+        <Card className="p-6 mt-8">
+          <h2 className="text-xl font-bold mb-4 text-primary">Technician Work Distribution</h2>
+          {technicianWork.length > 0 ? (
+            <ResponsiveContainer width="100%" height={400}>
+              <BarChart data={technicianWork} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="technician" angle={-45} textAnchor="end" height={100} />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="completed" fill="#10b981" name="Completed" stackId="a" />
+                <Bar dataKey="inProgress" fill="#3b82f6" name="In Progress" stackId="a" />
+                <Bar dataKey="pending" fill="#f59e0b" name="Pending" stackId="a" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-center text-muted-foreground py-8">No technician data available</p>
+          )}
+        </Card>
       </div>
     </div>
   );

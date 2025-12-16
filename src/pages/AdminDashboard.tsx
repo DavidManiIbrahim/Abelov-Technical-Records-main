@@ -72,10 +72,10 @@ export default function AdminDashboard() {
         adminAPI.getAllServiceRequests(20, 0),
       ]);
 
-      setGlobalStats(stats);
-      setUsers(usersData);
-      setRequests(requestsData.requests);
-      setTotalRequests(requestsData.total);
+      setGlobalStats(stats as GlobalStats);
+      setUsers((usersData as any[]).map((u) => ({ ...u } as UserData)));
+      setRequests((requestsData.requests || []) as RequestData[]);
+      setTotalRequests(requestsData.total || 0);
     } catch (error) {
       console.error('Failed to load admin data:', error);
       toast({
@@ -135,14 +135,14 @@ export default function AdminDashboard() {
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (!window.confirm('Delete this user and all their requests?')) return;
+    if (!window.confirm('Deactivate this user? (This will disable their account)')) return;
     setLoading(true);
     try {
-      await adminAPI.deleteUser(id);
+      await adminAPI.toggleUserStatus(id, false);
       await loadData();
-      toast({ title: 'Deleted', description: 'User has been removed' });
+      toast({ title: 'Success', description: 'User account has been deactivated' });
     } catch {
-      toast({ title: 'Error', description: 'Failed to delete user', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Failed to deactivate user', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
