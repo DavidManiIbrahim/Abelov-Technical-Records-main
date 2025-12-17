@@ -23,7 +23,7 @@ export const createApp = () => {
   // Production-ready CORS configuration
   const allowedOrigins = [
     // Production frontend (Render deployment)
-    "https://abelov-technical-records.onrender.com",
+    "https://abelov-technical-records-main.onrender.com",
     // Development frontend
     "http://localhost:8080",
     "http://localhost:8081",
@@ -40,6 +40,11 @@ export const createApp = () => {
 
         // Allow specific origins
         if (allowedOrigins.includes(origin)) {
+          return callback(null, true);
+        }
+
+        // In development, allow localhost variations
+        if (process.env.NODE_ENV !== 'production' && origin && origin.includes('localhost')) {
           return callback(null, true);
         }
 
@@ -61,8 +66,19 @@ export const createApp = () => {
     })
   );
 
-  // Global OPTIONS handler for all routes
-  app.options('*', cors());
+  // Global OPTIONS handler for all routes - handles any OPTIONS requests that slip through
+  app.options('*', (req, res) => {
+    const origin = req.headers.origin;
+    if (!origin || allowedOrigins.includes(origin) || (process.env.NODE_ENV !== 'production' && origin.includes('localhost'))) {
+      res.header('Access-Control-Allow-Origin', origin || '*');
+      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.sendStatus(200);
+    } else {
+      res.sendStatus(403);
+    }
+  });
   app.use(compression());
   app.use(cookieParser());
   app.use(express.json({ limit: "1mb" }));

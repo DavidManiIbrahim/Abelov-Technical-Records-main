@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: abelov-technical-records
+    runtime: static
+    buildCommand: npm run build
+    staticPublishPath: dist
+    routes:
+      - type: redirect
+        source: /*
+        destination: /index.html
+        status: 200
