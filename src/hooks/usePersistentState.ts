@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { persistentState } from '@/utils/storage';
 
-export interface UsePersistentStateOptions {
+export interface UsePersistentStateOptions<T> {
   storageKey: string;
-  defaultValue: any;
+  defaultValue: T;
   ttl?: number;
-  serialize?: (value: any) => any;
-  deserialize?: (value: any) => any;
+  serialize?: (value: T) => unknown;
+  deserialize?: (value: unknown) => T;
 }
 
 /**

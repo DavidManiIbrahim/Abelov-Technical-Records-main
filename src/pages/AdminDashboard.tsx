@@ -80,7 +80,7 @@ export default function AdminDashboard() {
       ]);
 
       setGlobalStats(stats as GlobalStats);
-      setUsers((usersData as any[]).map((u) => ({ ...u } as UserData)));
+      setUsers((usersData as unknown[]).map((u) => ({ ...u } as UserData)));
       setRequests((requestsData.requests || []) as RequestData[]);
       setTotalRequests(requestsData.total || 0);
     } catch (error) {

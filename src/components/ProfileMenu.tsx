@@ -64,13 +64,6 @@ export default function ProfileMenu() {
     }
   };
 
-  const handleRemoveImage = () => {
-    setProfileImage(null);
-    localStorage.removeItem('userProfileImage');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
 
   const handleUsernameChange = (newUsername: string) => {
     setUsername(newUsername);

@@ -14,7 +14,7 @@ import abelovLogo from '@/assets/abelov-logo.png';
 
 export default function DashboardPage() {
   const navigate = useNavigate();
-  const { user, signOut, isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
 
   const getUsername = () => {
     return localStorage.getItem('userUsername') || '';
@@ -71,7 +71,7 @@ export default function DashboardPage() {
             onHold: globalStats.onHoldTickets || 0,
             totalRevenue: globalStats.totalRevenue || 0,
           });
-        } catch (statsError) {
+        } catch {
           // Calculate stats locally from loaded requests as last resort
           const loadedRequests = data.requests || [];
           const calculatedStats = loadedRequests.reduce(

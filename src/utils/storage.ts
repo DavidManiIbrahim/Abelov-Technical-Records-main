@@ -4,7 +4,7 @@
  */
 
 // Memory cache utilities (original implementation)
-const memoryCache = new Map<string, any>();
+const memoryCache = new Map<string, unknown>();
 
 export function getCache<T>(key: string): T | null {
   return memoryCache.get(key) || null;
@@ -128,7 +128,7 @@ class PersistentStorage {
       }
 
       return true;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

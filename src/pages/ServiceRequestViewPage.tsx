@@ -7,17 +7,8 @@ import { serviceRequestAPI } from '@/lib/api';
 import { ServiceRequest } from '@/types/database';
 import { ArrowLeft, Loader2, Printer, Edit } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
-import Barcode from 'react-barcode';
+import QRCode from 'react-qr-code';
 
-function escapeHtml(unsafe: string) {
-  return unsafe
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;')
-    .replaceAll('\n', '<br/>');
-}
 
 export default function ServiceRequestViewPage() {
   const { id } = useParams<{ id: string }>();
@@ -417,16 +408,13 @@ export default function ServiceRequestViewPage() {
               <p>Last Updated: {new Date(request.updated_at).toLocaleString()}</p>
             </div>
 
-            {/* Barcode */}
+            {/* QR Code */}
             <div className="mt-6 pt-4 border-t text-center">
               <div className="flex flex-col items-center">
-                <p className="text-xs text-muted-foreground mb-2">Service Request Barcode</p>
-                <Barcode
+                <p className="text-xs text-muted-foreground mb-2">Service Request QR Code</p>
+                <QRCode
                   value={request.id}
-                  width={1.5}
-                  height={60}
-                  fontSize={12}
-                  margin={0}
+                  size={128}
                 />
               </div>
             </div>

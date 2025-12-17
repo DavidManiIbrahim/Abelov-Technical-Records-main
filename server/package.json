@@ -21,6 +21,7 @@
     "mongoose": "^8.8.1",
     "pino": "^9.4.0",
     "pino-http": "^9.0.0",
+    "react-qr-code": "^2.0.18",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0",
     "uuid": "^9.0.1",

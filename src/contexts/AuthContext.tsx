@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUserRoles([]);
             clearSessionFromStorage();
           }
-        } catch (apiError: any) {
+        } catch (apiError: unknown) {
           console.warn('Session verification failed:', apiError);
 
           if (isMounted) {

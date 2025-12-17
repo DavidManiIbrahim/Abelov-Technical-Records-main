@@ -95,13 +95,12 @@ export const serviceRequestAPI = {
     const cached = getCache<{ total: number; completed: number; pending: number; inProgress: number; totalRevenue: number }>(key);
     if (cached) return cached;
     const res = await apiFetch(`/requests/stats/${userId}`);
-    const stats = (res?.data || res) as any;
+    const stats = res?.data || res;
     setCache(key, stats);
     return stats;
   },
 };
 
-type UserProfile = { id: string; email: string; full_name: string | null; company_name: string | null; is_active: boolean; created_at: string };
 
 // Admin API - All calls go to MongoDB backend
 export const adminAPI = {
@@ -129,14 +128,22 @@ export const adminAPI = {
   async getActivityLogs(limit = 50, offset = 0) {
     const res = await apiFetch(`/admin/logs?limit=${limit}&offset=${offset}`);
     return { 
-      logs: (res?.data || res?.logs || []) as any[], 
+      logs: (res?.data || res?.logs || []) as unknown[], 
       total: res?.total || 0 
     };
   },
 
   async getGlobalStats() {
     const res = await apiFetch('/admin/stats');
-    return res as any;
+    return res as {
+      totalUsers: number;
+      totalTickets: number;
+      pendingTickets: number;
+      completedTickets: number;
+      inProgressTickets: number;
+      onHoldTickets: number;
+      totalRevenue: number;
+    };
   },
 
   async searchRequests(query: string, limit = 50, offset = 0) {
