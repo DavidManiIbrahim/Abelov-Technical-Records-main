@@ -19,6 +19,7 @@ export const createApp = () => {
 
   app.use(httpLogger);
   app.use(helmet());
+
   // Production-ready CORS configuration
   const allowedOrigins = [
     // Production frontend (Render deployment)
@@ -28,14 +29,13 @@ export const createApp = () => {
     "http://localhost:8081",
     "http://localhost:3000",
     "http://localhost:5173",
-    // Mobile browsers and barcode scanner apps (common user agents)
-    // CORS doesn't block direct URL access from mobile apps/browser
   ];
 
+  // CORS middleware with preflight handling
   app.use(
     cors({
       origin: (origin, callback) => {
-        // Allow requests with no origin (mobile apps, Postman, etc.)
+        // Allow requests with no origin (mobile apps, Postman, curl, etc.)
         if (!origin) return callback(null, true);
 
         // Allow specific origins
@@ -53,11 +53,16 @@ export const createApp = () => {
         "Authorization",
         "X-Requested-With",
         "Accept",
-        "Origin"
+        "Origin",
+        "X-CSRF-Token"
       ],
-      optionsSuccessStatus: 200, // Some legacy browsers choke on 204
+      optionsSuccessStatus: 200, // Explicitly set 200 for OPTIONS success
+      preflightContinue: false,   // Don't pass OPTIONS to next handler
     })
   );
+
+  // Global OPTIONS handler for all routes
+  app.options('*', cors());
   app.use(compression());
   app.use(cookieParser());
   app.use(express.json({ limit: "1mb" }));
