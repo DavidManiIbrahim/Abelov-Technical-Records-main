@@ -11,6 +11,8 @@ import { Loader2, LogOut, Home, Users, Ticket, Activity, TrendingUp, Trash2 } fr
 import { useAuth } from '@/contexts/AuthContext';
 import { adminAPI } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import abelovLogo from '@/assets/abelov-logo.png';
+
 
 interface GlobalStats {
   totalUsers: number;
@@ -186,9 +188,12 @@ export default function AdminDashboard() {
       {/* Header */}
       <div className="border-b bg-card p-4 md:p-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
+          <div className='flex items-center gap-4'>
+          <img src={abelovLogo} alt="Abelov Logo" className="w-12 rounded-3xl h-12" />
           <div>
             <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
             <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
+          </div>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => navigate('/dashboard')} variant="outline" className="md:flex hidden">
@@ -298,8 +303,9 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                     <TrendingUp className="w-5 h-5 text-emerald-600" />
                   </div>
-                  <p className="text-3xl font-bold text-emerald-700">₦{(globalStats.totalRevenue / 1000000).toFixed(1)}M</p>
+                  <p className="text-3xl font-bold text-emerald-700">₦{(globalStats.totalRevenue || 0).toFixed(2)}</p>
                   <p className="text-xs text-gray-500">Total earnings</p>
+                 
                 </div>
               </Card>
             </div>

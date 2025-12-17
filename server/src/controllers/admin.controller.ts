@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from "express";
 import { ApiError } from "../middlewares/error";
 import { ensureAdminWithSampleRequest } from "../services/admin.service";
 import { RequestModel } from "../models/request.model";
+import { UserModel } from "../models/user.model";
 
 export const initAdmin = async (_req: Request, res: Response) => {
   const result = await ensureAdminWithSampleRequest();
@@ -11,9 +12,8 @@ export const initAdmin = async (_req: Request, res: Response) => {
 
 export const getGlobalStats = async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get unique users from requests
-    const uniqueUsers = await RequestModel.distinct("user_id");
-    const totalUsers = uniqueUsers.length;
+    // Get total users from User model
+    const totalUsers = await UserModel.countDocuments();
 
     const totalTickets = await RequestModel.countDocuments();
     const pendingTickets = await RequestModel.countDocuments({ status: "Pending" });
@@ -40,14 +40,24 @@ export const getGlobalStats = async (_req: Request, res: Response, next: NextFun
 
 export const getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get unique users from requests
-    const users = await RequestModel.distinct("user_id");
+    // Get all users from the User model
+    const users = await UserModel.find({}, 'id email roles is_active created_at');
     const userStats = await Promise.all(
-      users.map(async (userId: string) => ({
-        id: userId,
-        email: userId, // Placeholder
-        total_requests: await RequestModel.countDocuments({ user_id: userId }),
-        completed: await RequestModel.countDocuments({ user_id: userId, status: "Completed" }),
+      users.map(async (user: any) => ({
+        id: user.id,
+        email: user.email,
+        full_name: null, // Not stored in user model currently
+        company_name: null, // Not stored in user model currently
+        is_active: user.is_active,
+        created_at: user.created_at,
+        ticketCount: await RequestModel.countDocuments({ user_id: user.id }),
+        totalRevenue: await RequestModel.aggregate([
+          { $match: { user_id: user.id } },
+          { $group: { _id: null, total: { $sum: '$total_cost' } } }
+        ]).then(result => result[0]?.total || 0),
+        pendingTickets: await RequestModel.countDocuments({ user_id: user.id, status: "Pending" }),
+        completedTickets: await RequestModel.countDocuments({ user_id: user.id, status: "Completed" }),
+        lastActivityDate: await RequestModel.findOne({ user_id: user.id }, {}, { sort: { updated_at: -1 } }).then(doc => doc?.updated_at || null),
       }))
     );
     res.json({ data: userStats });
