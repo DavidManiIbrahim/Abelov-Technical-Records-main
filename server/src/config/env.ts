@@ -10,7 +10,6 @@ const EnvSchema = z.object({
     .transform((v) => Number(v))
     .refine((v) => Number.isFinite(v) && v > 0, "PORT must be a positive number")
     .default("4000"),
-  CORS_ORIGIN: z.string().default("*"),
   RATE_LIMIT_WINDOW_MS: z
     .string()
     .transform((v) => Number(v))
@@ -37,7 +36,6 @@ if (!parsed.success) {
 export const env = parsed.data as unknown as {
   NODE_ENV: "development" | "test" | "production";
   PORT: number;
-  CORS_ORIGIN: string;
   RATE_LIMIT_WINDOW_MS: number;
   RATE_LIMIT_MAX: number;
   MONGODB_URI: string;
