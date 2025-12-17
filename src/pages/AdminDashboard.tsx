@@ -29,13 +29,17 @@ interface UserData {
   email: string;
   full_name: string | null;
   company_name: string | null;
+  // Whether the account is currently active
   is_active: boolean;
   created_at: string;
+  // Aggregate stats
   ticketCount: number;
   totalRevenue: number;
   pendingTickets: number;
   completedTickets: number;
   lastActivityDate: string | null;
+  // Optional roles array coming from backend (`roles` on user document)
+  roles?: string[];
 }
 
 interface RequestData {
@@ -447,7 +451,8 @@ export default function AdminDashboard() {
                       <TableHeader>
                         <TableRow className="bg-muted/50">
                           <TableHead className="text-xs font-semibold">Email</TableHead>
-                          <TableHead className="text-xs font-semibold">Name</TableHead>
+                          <TableHead className="text-xs font-semibold">Username</TableHead>
+                          <TableHead className="text-xs font-semibold">Role</TableHead>
                           <TableHead className="text-xs font-semibold">Tickets</TableHead>
                           <TableHead className="text-xs font-semibold">Revenue</TableHead>
                           <TableHead className="text-xs font-semibold">Status</TableHead>
@@ -464,10 +469,14 @@ export default function AdminDashboard() {
                         ) : (
                           users.map((u: UserData) => {
                             const nameFromEmail = u.email.split('@')[0];
+                            const primaryRole = (u.roles && u.roles.length > 0 ? u.roles[0] : 'user') || 'user';
                             return (
                               <TableRow key={u.id} className="hover:bg-muted/50 transition-colors">
                                 <TableCell className="text-sm">{u.email}</TableCell>
                                 <TableCell className="text-sm font-medium">{nameFromEmail}</TableCell>
+                                <TableCell className="text-sm capitalize">
+                                  {primaryRole}
+                                </TableCell>
                                 <TableCell className="text-sm font-semibold">{u.ticketCount}</TableCell>
                                 <TableCell className="text-sm font-semibold">₦{u.totalRevenue?.toFixed(0) || '0'}</TableCell>
                                 <TableCell>

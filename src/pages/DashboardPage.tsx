@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
-import { serviceRequestAPI } from '@/lib/api';
+import { serviceRequestAPI, adminAPI } from '@/lib/api';
 import { ServiceRequest } from '@/types/database';
 import { Plus, Search, Edit, Eye, Trash2, BarChart3, Shield } from 'lucide-react';
 import ProfileMenu from '@/components/ProfileMenu';
@@ -37,60 +37,77 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       const [data, statsData] = await Promise.all([
-        serviceRequestAPI.getByUserId(user.id),
-        serviceRequestAPI.getStats(user.id),
+        adminAPI.getAllServiceRequests(100, 0), // Get all requests instead of just user's
+        adminAPI.getGlobalStats(),
       ]);
-      setRequests(data || []);
-      setFilteredRequests(data || []);
+      setRequests(data.requests || []);
+      setFilteredRequests(data.requests || []);
 
-      // Add onHold to stats if not present
-      const completeStats = {
-        ...statsData,
-        onHold: statsData.onHold || 0,
-      };
-      setStats(completeStats);
+      // Map global stats to expected format
+      setStats({
+        total: statsData.totalTickets || 0,
+        completed: statsData.completedTickets || 0,
+        pending: statsData.pendingTickets || 0,
+        inProgress: statsData.inProgressTickets || 0,
+        onHold: statsData.onHoldTickets || 0,
+        totalRevenue: statsData.totalRevenue || 0,
+      });
     } catch (error) {
       console.error('Error loading requests:', error);
       // Fallback: try to load just requests if stats fail
       try {
-        const data = await serviceRequestAPI.getByUserId(user.id);
-        setRequests(data || []);
-        setFilteredRequests(data || []);
+        const data = await adminAPI.getAllServiceRequests(100, 0);
+        setRequests(data.requests || []);
+        setFilteredRequests(data.requests || []);
 
-        // Calculate stats locally as fallback
-        const calculatedStats = (data || []).reduce(
-          (acc, request) => {
-            acc.total++;
-            acc.totalRevenue += request.total_cost || 0;
+        // Try to get global stats as fallback
+        try {
+          const globalStats = await adminAPI.getGlobalStats();
+          setStats({
+            total: globalStats.totalTickets || 0,
+            completed: globalStats.completedTickets || 0,
+            pending: globalStats.pendingTickets || 0,
+            inProgress: globalStats.inProgressTickets || 0,
+            onHold: globalStats.onHoldTickets || 0,
+            totalRevenue: globalStats.totalRevenue || 0,
+          });
+        } catch (statsError) {
+          // Calculate stats locally from loaded requests as last resort
+          const loadedRequests = data.requests || [];
+          const calculatedStats = loadedRequests.reduce(
+            (acc, request) => {
+              acc.total++;
+              acc.totalRevenue += request.total_cost || 0;
 
-            switch (request.status) {
-              case 'Completed':
-                acc.completed++;
-                break;
-              case 'Pending':
-                acc.pending++;
-                break;
-              case 'In-Progress':
-                acc.inProgress++;
-                break;
-              case 'On-Hold':
-                acc.onHold++;
-                break;
+              switch (request.status) {
+                case 'Completed':
+                  acc.completed++;
+                  break;
+                case 'Pending':
+                  acc.pending++;
+                  break;
+                case 'In-Progress':
+                  acc.inProgress++;
+                  break;
+                case 'On-Hold':
+                  acc.onHold++;
+                  break;
+              }
+
+              return acc;
+            },
+            {
+              total: 0,
+              completed: 0,
+              pending: 0,
+              inProgress: 0,
+              onHold: 0,
+              totalRevenue: 0,
             }
+          );
 
-            return acc;
-          },
-          {
-            total: 0,
-            completed: 0,
-            pending: 0,
-            inProgress: 0,
-            onHold: 0,
-            totalRevenue: 0,
-          }
-        );
-
-        setStats(calculatedStats);
+          setStats(calculatedStats);
+        }
       } catch (fallbackError) {
         console.error('Fallback request loading also failed:', fallbackError);
         setRequests([]);
@@ -121,8 +138,8 @@ export default function DashboardPage() {
       setFilteredRequests(requests);
     } else {
       try {
-        const results = await serviceRequestAPI.search(user.id, query);
-        setFilteredRequests(results || []);
+        const results = await adminAPI.searchRequests(query, 100, 0);
+        setFilteredRequests(results.requests || []);
       } catch (error) {
         console.error('Error searching:', error);
       }

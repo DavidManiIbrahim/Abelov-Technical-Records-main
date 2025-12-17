@@ -40,8 +40,9 @@ export const getGlobalStats = async (_req: Request, res: Response, next: NextFun
 
 export const getAllUsers = async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get all users from the User model
+    // Get ALL users from the User model - no role filtering
     const users = await UserModel.find({}, 'id email roles is_active created_at');
+
     const userStats = await Promise.all(
       users.map(async (user: any) => ({
         id: user.id,
@@ -60,6 +61,7 @@ export const getAllUsers = async (_req: Request, res: Response, next: NextFuncti
         lastActivityDate: await RequestModel.findOne({ user_id: user.id }, {}, { sort: { updated_at: -1 } }).then(doc => doc?.updated_at || null),
       }))
     );
+
     res.json({ data: userStats });
   } catch (err) {
     next(err);
