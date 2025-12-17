@@ -1,12 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useUserPreference } from '@/hooks/usePersistentState';
+import { useTheme } from 'next-themes';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { LogOut, Upload } from 'lucide-react';
+import { LogOut, Upload, X } from 'lucide-react';
 
 export default function ProfileMenu() {
   const { user, signOut } = useAuth();
@@ -18,8 +17,8 @@ export default function ProfileMenu() {
   const [hasChanges, setHasChanges] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Persistent theme preference
-  const [theme, setTheme] = useUserPreference<'light' | 'dark'>('theme', 'light');
+  // Theme management
+  const { theme, setTheme } = useTheme();
 
   const getInitials = (email?: string) => {
     if (!email) return 'U';
@@ -193,6 +192,14 @@ export default function ProfileMenu() {
                     className="flex-1"
                   >
                     Dark
+                  </Button>
+                  <Button
+                    variant={theme === 'system' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setTheme('system')}
+                    className="flex-1"
+                  >
+                    System
                   </Button>
                 </div>
               </div>
