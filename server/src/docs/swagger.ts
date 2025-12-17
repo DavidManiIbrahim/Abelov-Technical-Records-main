@@ -8,8 +8,7 @@ export const swaggerSpec = swaggerJSDoc({
       version: "1.0.0",
       description: "REST API for technical service requests",
     },
-    servers: [{ url: "https://abelov-technical-records-backend.onrender.com"
- }],
+    servers: [{ url: "https://abelov-technical-records-backend.onrender.com" }, { url: "http://localhost:8080" }],
     components: {
       schemas: {
         Request: {

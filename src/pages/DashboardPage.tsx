@@ -14,6 +14,10 @@ import abelovLogo from '@/assets/abelov-logo.png';
 export default function DashboardPage() {
   const navigate = useNavigate();
   const { user, signOut, isAdmin } = useAuth();
+
+  const getUsername = () => {
+    return localStorage.getItem('userUsername') || '';
+  };
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<ServiceRequest[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -23,6 +27,7 @@ export default function DashboardPage() {
     completed: 0,
     pending: 0,
     inProgress: 0,
+    onHold: 0,
     totalRevenue: 0,
   });
 
@@ -30,13 +35,44 @@ export default function DashboardPage() {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const [data, statsData] = await Promise.all([
-        serviceRequestAPI.getByUserId(user.id),
-        serviceRequestAPI.getStats(user.id),
-      ]);
+      const data = await serviceRequestAPI.getByUserId(user.id);
       setRequests(data || []);
       setFilteredRequests(data || []);
-      setStats(statsData);
+
+      // Calculate stats locally from the requests data
+      const calculatedStats = (data || []).reduce(
+        (acc, request) => {
+          acc.total++;
+          acc.totalRevenue += request.total_cost || 0;
+
+          switch (request.status) {
+            case 'Completed':
+              acc.completed++;
+              break;
+            case 'Pending':
+              acc.pending++;
+              break;
+            case 'In-Progress':
+              acc.inProgress++;
+              break;
+            case 'On-Hold':
+              acc.onHold++;
+              break;
+          }
+
+          return acc;
+        },
+        {
+          total: 0,
+          completed: 0,
+          pending: 0,
+          inProgress: 0,
+          onHold: 0,
+          totalRevenue: 0,
+        }
+      );
+
+      setStats(calculatedStats);
     } catch (error) {
       console.error('Error loading requests:', error);
     } finally {
@@ -136,12 +172,23 @@ export default function DashboardPage() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-8 py-8">
+        {/* Welcome Message */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-primary mb-2">
+            Welcome back{getUsername() ? `, ${getUsername()}` : ''}!
+          </h1>
+          <p className="text-muted-foreground">
+            Here's an overview of your service requests and business metrics.
+          </p>
+        </div>
+
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
           <StatCard title="Total Requests" value={stats.total} />
           <StatCard title="Completed" value={stats.completed} />
           <StatCard title="Pending" value={stats.pending} />
           <StatCard title="In Progress" value={stats.inProgress} />
+          <StatCard title="On Hold" value={stats.onHold} />
           <StatCard title="Total Revenue" value={`₦${(stats.totalRevenue || 0).toFixed(2)}`} />
         </div>
 

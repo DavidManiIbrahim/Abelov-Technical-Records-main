@@ -7,6 +7,7 @@ import { serviceRequestAPI } from '@/lib/api';
 import { ServiceRequest } from '@/types/database';
 import { ArrowLeft, Loader2, Printer, Edit } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import Barcode from 'react-barcode';
 
 function escapeHtml(unsafe: string) {
   return unsafe
@@ -414,6 +415,20 @@ export default function ServiceRequestViewPage() {
             <div className="print-hide text-xs text-muted-foreground mt-6 pt-4 border-t">
               <p>Created: {new Date(request.created_at).toLocaleString()}</p>
               <p>Last Updated: {new Date(request.updated_at).toLocaleString()}</p>
+            </div>
+
+            {/* Barcode */}
+            <div className="mt-6 pt-4 border-t text-center">
+              <div className="flex flex-col items-center">
+                <p className="text-xs text-muted-foreground mb-2">Service Request Barcode</p>
+                <Barcode
+                  value={request.id}
+                  width={1.5}
+                  height={60}
+                  fontSize={12}
+                  margin={0}
+                />
+              </div>
             </div>
           </Card>
         </div>

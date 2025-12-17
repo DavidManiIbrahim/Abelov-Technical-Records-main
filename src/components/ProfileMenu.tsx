@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { LogOut, Upload, X } from 'lucide-react';
 
 export default function ProfileMenu() {
@@ -10,6 +11,7 @@ export default function ProfileMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [username, setUsername] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getInitials = (email?: string) => {
@@ -64,16 +66,28 @@ export default function ProfileMenu() {
     }
   };
 
+  const handleUsernameChange = (newUsername: string) => {
+    setUsername(newUsername);
+    localStorage.setItem('userUsername', newUsername);
+  };
+
   const handleLogout = async () => {
     setIsOpen(false);
     await signOut();
   };
 
-  // Load profile image from localStorage on mount
+  // Load profile image and username from localStorage on mount
   if (profileImage === null) {
     const saved = localStorage.getItem('userProfileImage');
     if (saved) {
       setProfileImage(saved);
+    }
+  }
+
+  if (username === '') {
+    const savedUsername = localStorage.getItem('userUsername');
+    if (savedUsername) {
+      setUsername(savedUsername);
     }
   }
 
@@ -125,6 +139,19 @@ export default function ProfileMenu() {
               <div className="text-center">
                 <p className="text-sm text-gray-600 dark:text-gray-400">Email</p>
                 <p className="font-medium text-gray-900 dark:text-white break-words">{user?.email}</p>
+              </div>
+
+              {/* Username Input */}
+              <div className="w-full">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Username</p>
+                <Input
+                  type="text"
+                  placeholder="Enter your username"
+                  value={username}
+                  onChange={(e) => handleUsernameChange(e.target.value)}
+                  className="w-full"
+                  maxLength={50}
+                />
               </div>
 
               {/* Image Upload Section */}
