@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authAPI } from '@/lib/api';
+import { persistentState } from '@/utils/storage';
 
 type Session = { user: { id: string; email: string; roles?: string[] } } | null;
 type User = { id: string; email: string; roles?: string[] } | null;
@@ -184,8 +185,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     setUserRoles([]);
 
-    // Clear localStorage
+    // Clear localStorage session data
     clearSessionFromStorage();
+
+    // Clear all user-related persistent data
+    persistentState.clearUserData();
 
     // Try to logout on backend, but don't fail if it doesn't work
     try {

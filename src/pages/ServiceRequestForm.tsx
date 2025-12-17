@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { usePersistentFormState } from '@/hooks/usePersistentState';
+import { persistentState } from '@/utils/storage';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,9 +34,15 @@ export default function ServiceRequestForm() {
   const isEditMode = !!id;
   const [loading, setLoading] = useState(isEditMode);
   const [submitting, setSubmitting] = useState(false);
-  const [currentStep, setCurrentStep] = useState(0);
 
-  const [formData, setFormData] = useState<Partial<ServiceRequest>>({
+  // Persistent state for form progress (only for new forms, not edits)
+  const [currentStep, setCurrentStep] = usePersistentFormState(
+    isEditMode ? `edit_step_${id}` : 'new_request_step',
+    0
+  );
+
+  // Default form data
+  const getDefaultFormData = (): Partial<ServiceRequest> => ({
     technician_name: '',
     request_date: new Date().toISOString().split('T')[0],
     customer_name: '',
@@ -66,9 +74,17 @@ export default function ServiceRequestForm() {
     },
   });
 
-  const [timelineSteps, setTimelineSteps] = useState<RepairTimelineStep[]>([
-    { step: '', date: '', note: '', status: '' },
-  ]);
+  // Persistent state for form data (only for new forms)
+  const [formData, setFormData] = usePersistentFormState(
+    isEditMode ? `edit_form_${id}` : 'new_request_form',
+    getDefaultFormData()
+  );
+
+  // Persistent state for timeline steps
+  const [timelineSteps, setTimelineSteps] = usePersistentFormState(
+    isEditMode ? `edit_timeline_${id}` : 'new_request_timeline',
+    [{ step: '', date: '', note: '', status: '' }]
+  );
 
   useEffect(() => {
     if (isEditMode && id && user?.id) {
@@ -186,6 +202,13 @@ export default function ServiceRequestForm() {
           title: 'Success!',
           description: `Service request ${newRequest.id} has been created.`,
         });
+      }
+
+      // Clear persistent form state on successful submission
+      if (!isEditMode) {
+        persistentState.clearFormState('new_request_form');
+        persistentState.clearFormState('new_request_step');
+        persistentState.clearFormState('new_request_timeline');
       }
 
       navigate('/dashboard');

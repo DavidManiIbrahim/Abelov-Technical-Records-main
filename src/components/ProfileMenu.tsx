@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useUserPreference } from '@/hooks/usePersistentState';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -15,6 +17,9 @@ export default function ProfileMenu() {
   const [originalUsername, setOriginalUsername] = useState<string>('');
   const [hasChanges, setHasChanges] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Persistent theme preference
+  const [theme, setTheme] = useUserPreference<'light' | 'dark'>('theme', 'light');
 
   const getInitials = (email?: string) => {
     if (!email) return 'U';
@@ -167,6 +172,29 @@ export default function ProfileMenu() {
                   className="w-full"
                   maxLength={50}
                 />
+              </div>
+
+              {/* Theme Preference */}
+              <div className="w-full">
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">Theme</p>
+                <div className="flex gap-2">
+                  <Button
+                    variant={theme === 'light' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setTheme('light')}
+                    className="flex-1"
+                  >
+                    Light
+                  </Button>
+                  <Button
+                    variant={theme === 'dark' ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setTheme('dark')}
+                    className="flex-1"
+                  >
+                    Dark
+                  </Button>
+                </div>
               </div>
 
               {/* Hidden File Input */}
