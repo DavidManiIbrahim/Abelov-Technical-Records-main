@@ -31,21 +31,20 @@ export const createApp = () => {
     "http://localhost:5173",
   ];
 
-  // CORS middleware with preflight handling
+  // CORS middleware with proper credentials handling
   app.use(
     cors({
       origin: (origin, callback) => {
         // Allow requests with no origin (mobile apps, Postman, curl, etc.)
         if (!origin) return callback(null, true);
 
-        // Allow specific origins
-        if (allowedOrigins.includes(origin)) {
-          return callback(null, true);
-        }
+        // Check against allowed origins
+        const isAllowed = allowedOrigins.includes(origin) ||
+          (process.env.NODE_ENV !== 'production' && origin.includes('localhost'));
 
-        // In development, allow localhost variations
-        if (process.env.NODE_ENV !== 'production' && origin && origin.includes('localhost')) {
-          return callback(null, true);
+        if (isAllowed) {
+          // Return the specific origin, not true, when credentials are enabled
+          return callback(null, origin);
         }
 
         // Reject other origins
@@ -61,16 +60,23 @@ export const createApp = () => {
         "Origin",
         "X-CSRF-Token"
       ],
-      optionsSuccessStatus: 200, // Explicitly set 200 for OPTIONS success
-      preflightContinue: false,   // Don't pass OPTIONS to next handler
+      optionsSuccessStatus: 200,
+      preflightContinue: false,
     })
   );
 
-  // Global OPTIONS handler for all routes - handles any OPTIONS requests that slip through
+  // Global OPTIONS handler as backup
   app.options('*', (req, res) => {
     const origin = req.headers.origin;
-    if (!origin || allowedOrigins.includes(origin) || (process.env.NODE_ENV !== 'production' && origin.includes('localhost'))) {
-      res.header('Access-Control-Allow-Origin', origin || '*');
+    const isAllowed = !origin ||
+      allowedOrigins.includes(origin) ||
+      (process.env.NODE_ENV !== 'production' && origin.includes('localhost'));
+
+    if (isAllowed) {
+      // Only set origin header if we have a specific origin
+      if (origin) {
+        res.header('Access-Control-Allow-Origin', origin);
+      }
       res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin, X-CSRF-Token');
       res.header('Access-Control-Allow-Credentials', 'true');
