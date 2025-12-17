@@ -72,56 +72,84 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // On app load, restore session from localStorage first, then verify with backend
   useEffect(() => {
+    let isMounted = true;
+
     (async () => {
       try {
         // First try to restore from localStorage for immediate UI update
         const cachedSession = loadSessionFromStorage();
-        if (cachedSession) {
+        if (cachedSession && isMounted) {
           setSession(cachedSession.session);
           setUser(cachedSession.user);
           setUserRoles(cachedSession.roles);
         }
 
         // Then verify with backend
-        const me = await authAPI.me();
-        if (me && me.id) {
-          const roles = (me.roles as string[]) || [];
-          const sessionData = { user: { id: me.id, email: me.email, roles } };
-          const userData = { id: me.id, email: me.email, roles };
+        try {
+          const me = await authAPI.me();
+          if (me && me.id && isMounted) {
+            const roles = (me.roles as string[]) || [];
+            const sessionData = { user: { id: me.id, email: me.email, roles } };
+            const userData = { id: me.id, email: me.email, roles };
 
-          setSession(sessionData);
-          setUser(userData);
-          setUserRoles(roles);
+            setSession(sessionData);
+            setUser(userData);
+            setUserRoles(roles);
 
-          // Update localStorage with fresh data
-          saveSessionToStorage(sessionData, userData, roles);
-        } else {
-          // Backend session invalid, clear everything
+            // Update localStorage with fresh data
+            saveSessionToStorage(sessionData, userData, roles);
+          } else if (isMounted) {
+            // Backend session invalid, clear everything
+            setSession(null);
+            setUser(null);
+            setUserRoles([]);
+            clearSessionFromStorage();
+          }
+        } catch (apiError: any) {
+          console.warn('Session verification failed:', apiError);
+
+          if (isMounted) {
+            // If it's a 401 (unauthorized), clear the session
+            if (apiError.message?.includes('Unauthorized') || apiError.message?.includes('401')) {
+              setSession(null);
+              setUser(null);
+              setUserRoles([]);
+              clearSessionFromStorage();
+            }
+            // For other errors, keep the cached session but log the issue
+            else if (cachedSession) {
+              console.log('Keeping cached session due to API error');
+              // Session remains as loaded from localStorage
+            } else {
+              // No cached session and API failed, clear everything
+              setSession(null);
+              setUser(null);
+              setUserRoles([]);
+              clearSessionFromStorage();
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Session restoration failed:', err);
+
+        if (isMounted) {
+          // If backend check fails, clear local session
           setSession(null);
           setUser(null);
           setUserRoles([]);
           clearSessionFromStorage();
         }
-      } catch (err) {
-        console.warn('Session restoration failed:', err);
-
-        // If backend check fails, clear local session
-        setSession(null);
-        setUser(null);
-        setUserRoles([]);
-        clearSessionFromStorage();
-
-        // Try to logout on backend if possible
-        try {
-          await authAPI.logout();
-        } catch {
-          // Logout may also fail if not authenticated, that's ok
-        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     })();
-  }, [loadSessionFromStorage, saveSessionToStorage, clearSessionFromStorage]);
+
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - this effect should only run once on mount
 
   const signUp = async (email: string, password: string, userType: 'user' | 'admin' = 'user') => {
     const user = await authAPI.signup(email, password, userType);
@@ -159,7 +187,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Clear localStorage
     clearSessionFromStorage();
 
-    await authAPI.logout();
+    // Try to logout on backend, but don't fail if it doesn't work
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      console.warn('Logout API call failed:', error);
+      // Continue with local logout even if backend logout fails
+    }
   };
 
   return (

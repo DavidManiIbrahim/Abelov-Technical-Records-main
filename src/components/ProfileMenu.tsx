@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
@@ -86,18 +86,16 @@ export default function ProfileMenu() {
   };
 
   // Load profile image and username from localStorage on mount
-  if (profileImage === null) {
-    const saved = localStorage.getItem('userProfileImage');
-    if (saved) {
-      setProfileImage(saved);
+  useEffect(() => {
+    const savedImage = localStorage.getItem('userProfileImage');
+    if (savedImage) {
+      setProfileImage(savedImage);
     }
-  }
 
-  if (username === '') {
     const savedUsername = localStorage.getItem('userUsername') || '';
     setUsername(savedUsername);
     setOriginalUsername(savedUsername);
-  }
+  }, []);
 
   return (
     <div className="relative">
