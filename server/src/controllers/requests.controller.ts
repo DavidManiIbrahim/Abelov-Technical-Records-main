@@ -58,9 +58,10 @@ export const getStats = async (req: Request, res: Response, next: NextFunction) 
     
     const stats = {
       total: requests.length,
-      pending: requests.filter((r: any) => r.status === "pending").length,
-      completed: requests.filter((r: any) => r.status === "completed").length,
-      inProgress: requests.filter((r: any) => r.status === "in progress").length,
+      pending: requests.filter((r: any) => r.status === "Pending").length,
+      completed: requests.filter((r: any) => r.status === "Completed").length,
+      inProgress: requests.filter((r: any) => r.status === "In-Progress").length,
+      onHold: requests.filter((r: any) => r.status === "On-Hold").length,
       totalRevenue: requests.reduce((sum: number, r: any) => sum + (r.total_cost || 0), 0),
     };
     

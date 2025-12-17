@@ -18,6 +18,7 @@ interface GlobalStats {
   pendingTickets: number;
   completedTickets: number;
   inProgressTickets: number;
+  onHoldTickets: number;
   totalRevenue: number;
 }
 
@@ -275,6 +276,18 @@ export default function AdminDashboard() {
                   </div>
                   <p className="text-3xl font-bold text-cyan-700">{globalStats.inProgressTickets}</p>
                   <p className="text-xs text-gray-500">Currently being worked on</p>
+                </div>
+              </Card>
+
+              {/* On Hold */}
+              <Card className="p-6 bg-gradient-to-br from-red-50 to-orange-50 border-red-200">
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-600">On Hold</p>
+                    <Activity className="w-5 h-5 text-red-600" />
+                  </div>
+                  <p className="text-3xl font-bold text-red-700">{globalStats.onHoldTickets}</p>
+                  <p className="text-xs text-gray-500">Temporarily paused</p>
                 </div>
               </Card>
 

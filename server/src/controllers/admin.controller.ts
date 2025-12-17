@@ -11,24 +11,27 @@ export const initAdmin = async (_req: Request, res: Response) => {
 
 export const getGlobalStats = async (_req: Request, res: Response, next: NextFunction) => {
   try {
-    const total = await RequestModel.countDocuments();
-    const pending = await RequestModel.countDocuments({ status: "Pending" });
-    const inProgress = await RequestModel.countDocuments({ status: "In-Progress" });
-    const completed = await RequestModel.countDocuments({ status: "Completed" });
-    const onHold = await RequestModel.countDocuments({ status: "On-Hold" });
-    
+    // Get unique users from requests
+    const uniqueUsers = await RequestModel.distinct("user_id");
+    const totalUsers = uniqueUsers.length;
+
+    const totalTickets = await RequestModel.countDocuments();
+    const pendingTickets = await RequestModel.countDocuments({ status: "Pending" });
+    const inProgressTickets = await RequestModel.countDocuments({ status: "In-Progress" });
+    const completedTickets = await RequestModel.countDocuments({ status: "Completed" });
+    const onHoldTickets = await RequestModel.countDocuments({ status: "On-Hold" });
+
     const requests = await RequestModel.find();
     const totalRevenue = requests.reduce((sum: number, r: any) => sum + (r.total_cost || 0), 0);
-    
+
     res.json({
-      data: {
-        total,
-        pending,
-        inProgress,
-        completed,
-        onHold,
-        totalRevenue,
-      },
+      totalUsers,
+      totalTickets,
+      pendingTickets,
+      completedTickets,
+      inProgressTickets,
+      onHoldTickets,
+      totalRevenue,
     });
   } catch (err) {
     next(err);

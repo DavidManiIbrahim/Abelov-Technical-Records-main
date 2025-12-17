@@ -136,7 +136,7 @@ export const adminAPI = {
 
   async getGlobalStats() {
     const res = await apiFetch('/admin/stats');
-    return (res?.data || res) as any;
+    return res as any;
   },
 
   async searchRequests(query: string, limit = 50, offset = 0) {
