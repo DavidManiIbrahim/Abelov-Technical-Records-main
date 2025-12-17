@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { LogOut, Upload, X } from 'lucide-react';
+import { LogOut, Upload } from 'lucide-react';
 
 export default function ProfileMenu() {
   const { user, signOut } = useAuth();
@@ -12,6 +12,8 @@ export default function ProfileMenu() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [username, setUsername] = useState<string>('');
+  const [originalUsername, setOriginalUsername] = useState<string>('');
+  const [hasChanges, setHasChanges] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const getInitials = (email?: string) => {
@@ -68,7 +70,14 @@ export default function ProfileMenu() {
 
   const handleUsernameChange = (newUsername: string) => {
     setUsername(newUsername);
-    localStorage.setItem('userUsername', newUsername);
+    setHasChanges(newUsername !== originalUsername);
+  };
+
+  const handleSaveChanges = () => {
+    localStorage.setItem('userUsername', username);
+    setOriginalUsername(username);
+    setHasChanges(false);
+    // Could add a toast notification here if needed
   };
 
   const handleLogout = async () => {
@@ -85,10 +94,9 @@ export default function ProfileMenu() {
   }
 
   if (username === '') {
-    const savedUsername = localStorage.getItem('userUsername');
-    if (savedUsername) {
-      setUsername(savedUsername);
-    }
+    const savedUsername = localStorage.getItem('userUsername') || '';
+    setUsername(savedUsername);
+    setOriginalUsername(savedUsername);
   }
 
   return (
@@ -125,15 +133,24 @@ export default function ProfileMenu() {
 
             {/* User Info Section */}
             <div className="flex flex-col items-center gap-4 mb-6 pb-6 border-b border-gray-200 dark:border-gray-800">
-              {/* Avatar */}
-              <Avatar className="h-20 w-20">
-                {profileImage ? (
-                  <AvatarImage src={profileImage} alt={user?.email} />
-                ) : null}
-                <AvatarFallback className="bg-blue-500 text-white text-2xl font-semibold">
-                  {getInitials(user?.email)}
-                </AvatarFallback>
-              </Avatar>
+              {/* Avatar - Clickable for photo upload */}
+              <div className="relative">
+                <Avatar
+                  className="h-20 w-20 cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  {profileImage ? (
+                    <AvatarImage src={profileImage} alt={user?.email} />
+                  ) : null}
+                  <AvatarFallback className="bg-blue-500 text-white text-2xl font-semibold">
+                    {getInitials(user?.email)}
+                  </AvatarFallback>
+                </Avatar>
+                {/* Upload indicator */}
+                <div className="absolute -bottom-1 -right-1 bg-blue-500 text-white rounded-full p-1">
+                  <Upload size={12} />
+                </div>
+              </div>
 
               {/* User Email */}
               <div className="text-center">
@@ -154,44 +171,31 @@ export default function ProfileMenu() {
                 />
               </div>
 
-              {/* Image Upload Section */}
-              <div className="w-full">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileChange}
-                  className="hidden"
-                  disabled={isUploading}
-                />
-                <div className="flex gap-2 w-full">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading}
-                    className="flex-1 flex items-center justify-center gap-2"
-                  >
-                    <Upload size={16} />
-                    {isUploading ? 'Uploading...' : 'Upload Photo'}
-                  </Button>
-                  {profileImage && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleRemoveImage}
-                      disabled={isUploading}
-                      className="px-3"
-                    >
-                      <X size={16} />
-                    </Button>
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Max 5MB. JPG, PNG or GIF.
-                </p>
-              </div>
+              {/* Hidden File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileChange}
+                className="hidden"
+                disabled={isUploading}
+              />
+
+              {/* Instructions */}
+              <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
+                Click on your avatar to upload a photo (Max 5MB. JPG, PNG or GIF)
+              </p>
             </div>
+
+            {/* Update Button */}
+            {hasChanges && (
+              <Button
+                onClick={handleSaveChanges}
+                className="w-full flex items-center justify-center gap-2 mb-3"
+              >
+                Update Profile
+              </Button>
+            )}
 
             {/* Logout Button */}
             <Button

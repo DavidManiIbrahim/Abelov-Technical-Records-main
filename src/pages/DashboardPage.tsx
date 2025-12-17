@@ -35,46 +35,74 @@ export default function DashboardPage() {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const data = await serviceRequestAPI.getByUserId(user.id);
+      const [data, statsData] = await Promise.all([
+        serviceRequestAPI.getByUserId(user.id),
+        serviceRequestAPI.getStats(user.id),
+      ]);
       setRequests(data || []);
       setFilteredRequests(data || []);
 
-      // Calculate stats locally from the requests data
-      const calculatedStats = (data || []).reduce(
-        (acc, request) => {
-          acc.total++;
-          acc.totalRevenue += request.total_cost || 0;
+      // Add onHold to stats if not present
+      const completeStats = {
+        ...statsData,
+        onHold: statsData.onHold || 0,
+      };
+      setStats(completeStats);
+    } catch (error) {
+      console.error('Error loading requests:', error);
+      // Fallback: try to load just requests if stats fail
+      try {
+        const data = await serviceRequestAPI.getByUserId(user.id);
+        setRequests(data || []);
+        setFilteredRequests(data || []);
 
-          switch (request.status) {
-            case 'Completed':
-              acc.completed++;
-              break;
-            case 'Pending':
-              acc.pending++;
-              break;
-            case 'In-Progress':
-              acc.inProgress++;
-              break;
-            case 'On-Hold':
-              acc.onHold++;
-              break;
+        // Calculate stats locally as fallback
+        const calculatedStats = (data || []).reduce(
+          (acc, request) => {
+            acc.total++;
+            acc.totalRevenue += request.total_cost || 0;
+
+            switch (request.status) {
+              case 'Completed':
+                acc.completed++;
+                break;
+              case 'Pending':
+                acc.pending++;
+                break;
+              case 'In-Progress':
+                acc.inProgress++;
+                break;
+              case 'On-Hold':
+                acc.onHold++;
+                break;
+            }
+
+            return acc;
+          },
+          {
+            total: 0,
+            completed: 0,
+            pending: 0,
+            inProgress: 0,
+            onHold: 0,
+            totalRevenue: 0,
           }
+        );
 
-          return acc;
-        },
-        {
+        setStats(calculatedStats);
+      } catch (fallbackError) {
+        console.error('Fallback request loading also failed:', fallbackError);
+        setRequests([]);
+        setFilteredRequests([]);
+        setStats({
           total: 0,
           completed: 0,
           pending: 0,
           inProgress: 0,
           onHold: 0,
           totalRevenue: 0,
-        }
-      );
-
-      setStats(calculatedStats);
-    } catch (error) {
-      console.error('Error loading requests:', error);
+        });
+      }
     } finally {
       setLoading(false);
     }
