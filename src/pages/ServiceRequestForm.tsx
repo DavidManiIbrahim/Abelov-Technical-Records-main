@@ -23,7 +23,6 @@ const FORM_STEPS = [
   { id: 'problem', title: 'Problem Description', icon: FaExclamationTriangle },
   { id: 'diagnosis', title: 'Diagnosis & Repair', icon: FaTools },
   { id: 'costs', title: 'Cost Summary', icon: FaMoneyBill },
-  { id: 'timeline', title: 'Repair Timeline', icon: FaCalendarAlt },
   { id: 'confirmation', title: 'Confirmation', icon: FaCheckCircle },
 ];
 
@@ -99,8 +98,8 @@ export default function ServiceRequestForm() {
       const request = await serviceRequestAPI.getById(requestId);
       setFormData(request);
       setTimelineSteps(
-        request.repair_timeline && request.repair_timeline.length > 0 
-          ? request.repair_timeline 
+        request.repair_timeline && request.repair_timeline.length > 0
+          ? request.repair_timeline
           : [{ step: '', date: '', note: '', status: '' }]
       );
     } catch (error) {
@@ -543,78 +542,6 @@ export default function ServiceRequestForm() {
           </Card>
         );
       case 6:
-        return (
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-semibold text-primary">Repair Timeline</h2>
-              <Button onClick={addTimelineStep} size="sm">
-                <Plus className="w-4 h-4 mr-2" /> Add Step
-              </Button>
-            </div>
-            <div className="space-y-4">
-              {timelineSteps.map((step, index) => (
-                <Card key={index} className="p-4 bg-accent/50">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <Label>Step</Label>
-                        <Input
-                          value={step.step}
-                          onChange={(e) => updateTimelineStep(index, 'step', e.target.value)}
-                          placeholder="e.g., Initial inspection"
-                        />
-                      </div>
-                      <div>
-                        <Label>Date</Label>
-                        <Input
-                          type="date"
-                          value={step.date}
-                          onChange={(e) => updateTimelineStep(index, 'date', e.target.value)}
-                        />
-                      </div>
-                      <div>
-                        <Label>Note</Label>
-                        <Input
-                          value={step.note}
-                          onChange={(e) => updateTimelineStep(index, 'note', e.target.value)}
-                          placeholder="Additional notes"
-                        />
-                      </div>
-                      <div>
-                        <Label>Status</Label>
-                        <Select
-                          value={step.status}
-                          onValueChange={(value) => updateTimelineStep(index, 'status', value)}
-                        >
-                          <SelectTrigger>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Pending">Pending</SelectItem>
-                            <SelectItem value="In-Progress">In-Progress</SelectItem>
-                            <SelectItem value="Completed">Completed</SelectItem>
-                            <SelectItem value="On-Hold">On-Hold</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                    {timelineSteps.length > 1 && (
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => removeTimelineStep(index)}
-                        className="mt-8"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </Card>
-        );
-      case 7:
         return (
           <Card className="p-6">
             <h2 className="text-2xl font-semibold mb-4 text-primary">Customer Confirmation</h2>

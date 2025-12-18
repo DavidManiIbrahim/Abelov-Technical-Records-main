@@ -86,7 +86,7 @@ export default function AnalyticsDashboard() {
       });
     }
     return acc;
-  // }, [] as { technician: string; completed: number; inProgress: number; pending: number; total: number }[]);
+    // }, [] as { technician: string; completed: number; inProgress: number; pending: number; total: number }[]);
   }, [] as { technician: string; completed: number; inProgress: number; pending: number; onHold: number; total: number }[]);
 
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'];
@@ -94,8 +94,11 @@ export default function AnalyticsDashboard() {
   const totalRevenue = requests.reduce((sum, r) => sum + (r.payment_completed ? (r.total_cost || 0) : (r.deposit_paid || 0)), 0);
   const avgServiceTime = requests.length > 0 ? Math.round(requests.reduce((sum, r) => {
     const created = new Date(r.created_at);
-    const completed = r.diagnosis_date ? new Date(r.diagnosis_date) : new Date();
-    return sum + (completed.getTime() - created.getTime()) / (1000 * 60 * 60 * 24);
+    // Use updated_at if status is completed, otherwise use current time for duration calculation
+    const end = r.status === 'Completed' ? new Date(r.updated_at) : new Date();
+    // Ensure we don't get negative time if dates are weird
+    const diff = Math.abs(end.getTime() - created.getTime());
+    return sum + diff / (1000 * 60 * 60 * 24);
   }, 0) / requests.length) : 0;
 
   if (loading) {
@@ -235,7 +238,7 @@ export default function AnalyticsDashboard() {
                 <Bar dataKey="completed" fill="#10b981" name="Completed" stackId="a" />
                 <Bar dataKey="inProgress" fill="#3b82f6" name="In Progress" stackId="a" />
                 <Bar dataKey="pending" fill="#f59e0b" name="Pending" stackId="a" />
-                <Bar dataKey="onHold" fill="#ff0000" name="On Hold" stackId="a" />  
+                <Bar dataKey="onHold" fill="#ff0000" name="On Hold" stackId="a" />
               </BarChart>
             </ResponsiveContainer>
           ) : (

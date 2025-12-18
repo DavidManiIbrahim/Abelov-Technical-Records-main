@@ -49,7 +49,8 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       maxAge: 604800 * 1000,
       path: "/",
     });
-    res.json({ user });
+    // Return token in body as well for localStorage fallback
+    res.json({ user, token });
   } catch (err) {
     next(err);
   }

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -13,6 +14,7 @@ import QRCode from 'react-qr-code';
 export default function ServiceRequestViewPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const printRef = useRef<HTMLDivElement>(null);
   const [request, setRequest] = useState<ServiceRequest | null>(null);
   const [loading, setLoading] = useState(true);
@@ -189,7 +191,25 @@ export default function ServiceRequestViewPage() {
             <h1 className="text-4xl font-bold text-primary mb-2">Service Request Details</h1>
             <p className="text-muted-foreground">Request ID: {request.id}</p>
           </div>
-          {/* Buttons removed for public view */}
+          <div className="flex gap-2 print-hide">
+            {/* Only show action buttons if logged in */}
+            {user && (
+              <>
+                <Button variant="outline" onClick={handlePrint}>
+                  <Printer className="w-4 h-4 mr-2" />
+                  Print
+                </Button>
+                <Button onClick={() => navigate(`/edit/${request.id}`)}>
+                  <Edit className="w-4 h-4 mr-2" />
+                  Edit
+                </Button>
+                <Button variant="outline" onClick={() => navigate('/dashboard')}>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back
+                </Button>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Printable Content */}
@@ -400,7 +420,25 @@ export default function ServiceRequestViewPage() {
         </div>
 
         {/* Action Buttons - Hide on Print */}
-        {/* Action Buttons - Removed for public view */}
+        {/* Action Buttons - Mobile */}
+        <div className="md:hidden flex flex-col gap-2 mt-6 print-hide">
+          {user && (
+            <>
+              <Button variant="outline" onClick={handlePrint} className="w-full">
+                <Printer className="w-4 h-4 mr-2" />
+                Print
+              </Button>
+              <Button onClick={() => navigate(`/edit/${request.id}`)} className="w-full">
+                <Edit className="w-4 h-4 mr-2" />
+                Edit
+              </Button>
+              <Button variant="outline" onClick={() => navigate('/dashboard')} className="w-full">
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Back
+              </Button>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
