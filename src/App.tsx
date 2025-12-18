@@ -55,11 +55,7 @@ const App = () => (
               />
               <Route
                 path="/view/:id"
-                element={
-                  <ProtectedRoute>
-                    <ServiceRequestViewPage />
-                  </ProtectedRoute>
-                }
+                element={<ServiceRequestViewPage />}
               />
               <Route
                 path="/dashboard"
