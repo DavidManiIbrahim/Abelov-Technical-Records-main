@@ -16,6 +16,7 @@ export const createApp = () => {
   const app = express();
 
   app.disable("x-powered-by");
+  app.set("trust proxy", 1); // Trust first proxy (Render load balancer)
 
   app.use(httpLogger);
   app.use(helmet());

@@ -14,12 +14,12 @@ export const signup = async (req: Request, res: Response, next: NextFunction) =>
     const exists = await UserModel.findOne({ email });
     if (exists) throw new ApiError(409, "Email already registered");
     const { salt, hash } = hashPassword(password);
-    const doc = await UserModel.create({ 
-      email, 
-      roles: role ? [role] : ['user'], 
-      is_active: true, 
-      password_hash: hash, 
-      password_salt: salt 
+    const doc = await UserModel.create({
+      email,
+      roles: role ? [role] : ['user'],
+      is_active: true,
+      password_hash: hash,
+      password_salt: salt
     } as any);
     const user = doc.toJSON() as any;
     // Return user WITHOUT token (client must login separately)
@@ -41,10 +41,11 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     if (!ok) throw new ApiError(401, "Invalid credentials");
     const user = doc.toJSON() as any;
     const token = createToken({ sub: user.id, email: user.email }, 604800);
+    const isProduction = process.env.NODE_ENV === "production";
     res.cookie("token", token, {
       httpOnly: true,
-      secure: false,
-      sameSite: "lax",
+      secure: isProduction, // Secure in production (HTTPS)
+      sameSite: isProduction ? "none" : "lax", // None for cross-site (required for separate frontend/backend domains in prod)
       maxAge: 604800 * 1000,
       path: "/",
     });
@@ -89,7 +90,12 @@ export const me = async (req: Request, res: Response, next: NextFunction) => {
  */
 export const logout = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    res.clearCookie("token", { path: "/" });
+    const isProduction = process.env.NODE_ENV === "production";
+    res.clearCookie("token", {
+      path: "/",
+      secure: isProduction,
+      sameSite: isProduction ? "none" : "lax"
+    });
     res.json({ message: "Logged out successfully" });
   } catch (err) {
     next(err);
