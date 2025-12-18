@@ -236,7 +236,7 @@ export default function DashboardPage() {
           <StatCard title="Pending" value={stats.pending} />
           <StatCard title="In Progress" value={stats.inProgress} />
           <StatCard title="On Hold" value={stats.onHold} />
-          <StatCard title="Total Revenue" value={`₦${(stats.totalRevenue || 0).toFixed(2)}`} />
+          <StatCard title="Total Revenue" value={`₦${(stats.totalRevenue || 0).toLocaleString()}`} />
         </div>
 
         {/* Search and Create */}

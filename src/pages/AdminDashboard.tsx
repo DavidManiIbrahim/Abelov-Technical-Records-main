@@ -307,7 +307,7 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                     <TrendingUp className="w-5 h-5 text-emerald-600" />
                   </div>
-                  <p className="text-3xl font-bold text-emerald-700">₦{(globalStats.totalRevenue || 0)}</p>
+                  <p className="text-3xl font-bold text-emerald-700">₦{(globalStats.totalRevenue || 0).toLocaleString()}</p>
                   <p className="text-xs text-gray-500">Total earnings</p>
                  
                 </div>
@@ -398,7 +398,7 @@ export default function AdminDashboard() {
                                 <TableCell>
                                   <Badge className={getStatusColor(req.status)}>{req.status}</Badge>
                                 </TableCell>
-                                <TableCell className="text-sm font-semibold">₦{req.total_cost?.toFixed(2) || '0.00'}</TableCell>
+                                <TableCell className="text-sm font-semibold">₦{req.total_cost?.toLocaleString() || '0.00'}</TableCell>
                                 <TableCell className="text-sm text-muted-foreground">{req.technician_name}</TableCell>
                                 <TableCell className="text-sm text-muted-foreground">
                                   {new Date(req.created_at).toLocaleDateString()}
