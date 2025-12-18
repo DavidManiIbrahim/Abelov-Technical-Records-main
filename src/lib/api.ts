@@ -14,6 +14,9 @@ const apiFetch = async (path: string, init?: RequestInit) => {
   if (token) {
     // @ts-ignore
     headers['Authorization'] = `Bearer ${token}`;
+    // console.log('Attached auth token:', token.substring(0, 10) + '...');
+  } else {
+    console.warn('No auth token found in localStorage for request:', path);
   }
 
   const res = await fetch(`${API_BASE}${path}`, {
@@ -43,6 +46,8 @@ export const serviceRequestAPI = {
       invalidateCache(`service_requests:${record.user_id}`);
       invalidateCache(`stats:${record.user_id}`);
     }
+    invalidateCache('admin_requests');
+    invalidateCache('admin_global_stats');
     return record;
   },
 
@@ -76,12 +81,16 @@ export const serviceRequestAPI = {
       invalidateCache(`service_requests:${record.user_id}`);
       invalidateCache(`stats:${record.user_id}`);
     }
+    invalidateCache('admin_requests');
+    invalidateCache('admin_global_stats');
     return record;
   },
 
   async delete(id: string) {
     await apiFetch(`/requests/${id}`, { method: 'DELETE' });
     invalidateCache(`service_request:${id}`);
+    invalidateCache('admin_requests');
+    invalidateCache('admin_global_stats');
     // Invalidate all related service request and stats caches
     // Note: We rely on explicit cache invalidation in the calling code
   },
@@ -118,11 +127,17 @@ export const adminAPI = {
   },
 
   async getAllServiceRequests(limit = 100, offset = 0) {
+    const key = `admin_requests_limit=${limit}_offset=${offset}`;
+    const cached = getCache<{ requests: ServiceRequest[]; total: number }>(key);
+    if (cached) return cached;
+
     const res = await apiFetch(`/admin/requests?limit=${limit}&offset=${offset}`);
-    return {
+    const result = {
       requests: (res?.data || res?.requests || []) as ServiceRequest[],
       total: res?.total || 0
     };
+    setCache(key, result);
+    return result;
   },
 
   async getRequestsByStatus(status: string, limit = 100, offset = 0) {
@@ -142,8 +157,19 @@ export const adminAPI = {
   },
 
   async getGlobalStats() {
+    const cached = getCache<{
+      totalUsers: number;
+      totalTickets: number;
+      pendingTickets: number;
+      completedTickets: number;
+      inProgressTickets: number;
+      onHoldTickets: number;
+      totalRevenue: number;
+    }>('admin_global_stats');
+    if (cached) return cached;
+
     const res = await apiFetch('/admin/stats');
-    return res as {
+    const stats = res as {
       totalUsers: number;
       totalTickets: number;
       pendingTickets: number;
@@ -152,6 +178,8 @@ export const adminAPI = {
       onHoldTickets: number;
       totalRevenue: number;
     };
+    setCache('admin_global_stats', stats);
+    return stats;
   },
 
   async searchRequests(query: string, limit = 50, offset = 0) {

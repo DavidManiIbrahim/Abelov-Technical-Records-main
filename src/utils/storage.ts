@@ -4,18 +4,50 @@
  */
 
 // Memory cache utilities (original implementation)
-const memoryCache = new Map<string, unknown>();
+// Persistent cache utilities (localStorage implementation)
+const CACHE_PREFIX = 'abelov_api_cache_';
+const DEFAULT_TTL = 60 * 60 * 1000; // 1 hour
 
 export function getCache<T>(key: string): T | null {
-  return memoryCache.get(key) || null;
+  try {
+    const item = localStorage.getItem(`${CACHE_PREFIX}${key}`);
+    if (!item) return null;
+
+    const data = JSON.parse(item);
+    if (data.expiry && Date.now() > data.expiry) {
+      localStorage.removeItem(`${CACHE_PREFIX}${key}`);
+      return null;
+    }
+    return data.value;
+  } catch {
+    return null;
+  }
 }
 
-export function setCache<T>(key: string, value: T): void {
-  memoryCache.set(key, value);
+export function setCache<T>(key: string, value: T, ttl: number = DEFAULT_TTL): void {
+  try {
+    const data = {
+      value,
+      expiry: Date.now() + ttl,
+    };
+    localStorage.setItem(`${CACHE_PREFIX}${key}`, JSON.stringify(data));
+  } catch (err) {
+    console.warn('Failed to save to persistent cache', err);
+  }
 }
 
 export function invalidateCache(key: string): void {
-  memoryCache.delete(key);
+  try {
+    localStorage.removeItem(`${CACHE_PREFIX}${key}`);
+    // Also invalidate partial matches for lists (simple approximation)
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith(`${CACHE_PREFIX}${key}`)) {
+        localStorage.removeItem(k);
+      }
+    });
+  } catch {
+    // ignore
+  }
 }
 
 /**

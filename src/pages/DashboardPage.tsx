@@ -75,38 +75,38 @@ export default function DashboardPage() {
           // Calculate stats locally from loaded requests as last resort
           const loadedRequests = data.requests || [];
           const calculatedStats = loadedRequests.reduce(
-          (acc, request) => {
-            acc.total++;
-            acc.totalRevenue += request.total_cost || 0;
+            (acc, request) => {
+              acc.total++;
+              acc.totalRevenue += request.total_cost || 0;
 
-            switch (request.status) {
-              case 'Completed':
-                acc.completed++;
-                break;
-              case 'Pending':
-                acc.pending++;
-                break;
-              case 'In-Progress':
-                acc.inProgress++;
-                break;
-              case 'On-Hold':
-                acc.onHold++;
-                break;
+              switch (request.status) {
+                case 'Completed':
+                  acc.completed++;
+                  break;
+                case 'Pending':
+                  acc.pending++;
+                  break;
+                case 'In-Progress':
+                  acc.inProgress++;
+                  break;
+                case 'On-Hold':
+                  acc.onHold++;
+                  break;
+              }
+
+              return acc;
+            },
+            {
+              total: 0,
+              completed: 0,
+              pending: 0,
+              inProgress: 0,
+              onHold: 0,
+              totalRevenue: 0,
             }
+          );
 
-            return acc;
-          },
-          {
-            total: 0,
-            completed: 0,
-            pending: 0,
-            inProgress: 0,
-            onHold: 0,
-            totalRevenue: 0,
-          }
-        );
-
-        setStats(calculatedStats);
+          setStats(calculatedStats);
         }
       } catch (fallbackError) {
         console.error('Fallback request loading also failed:', fallbackError);
