@@ -15,6 +15,9 @@ import { serviceRequestAPI } from '@/lib/api';
 import { ServiceRequest, RepairTimelineStep } from '@/types/database';
 import { Plus, Trash2, Loader2, LogOut, Home } from 'lucide-react';
 import { FaStore, FaUser, FaLaptop, FaExclamationTriangle, FaTools, FaMoneyBill, FaCalendarAlt, FaCheckCircle } from 'react-icons/fa';
+import abelovLogo from '@/assets/abelov-logo.png';
+
+
 
 const FORM_STEPS = [
   { id: 'shop', title: 'Shop Information', icon: FaStore },
@@ -585,9 +588,13 @@ export default function ServiceRequestForm() {
       {/* Header with User Info and Logout */}
       <div className="border-b bg-card p-4 md:p-6">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-primary">Abelov Technical Records</h1>
-            <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
+          <div className="flex items-center gap-4">
+
+            <img src={abelovLogo} alt="Abelov Logo" className="w-12 rounded-3xl h-12" />
+            <div>
+              <h1 className="text-2xl font-bold text-primary">Abelov Technical Records</h1>
+              <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => navigate('/dashboard')} className="md:flex hidden">

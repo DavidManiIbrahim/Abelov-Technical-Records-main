@@ -9,6 +9,8 @@ import { ServiceRequest } from '@/types/database';
 import { ArrowLeft, Loader2, Printer, Edit } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import QRCode from 'react-qr-code';
+import abelovLogo from '@/assets/abelov-logo.png';
+
 
 
 export default function ServiceRequestViewPage() {
@@ -187,9 +189,12 @@ export default function ServiceRequestViewPage() {
       <div className="max-w-4xl mx-auto">
         {/* Header - Hide on Print */}
         <div className="print-hide mb-8 flex items-center justify-between">
+          <div className="flex items-center gap-4 rounded-full">
+          <img src={abelovLogo} alt="Abelov Logo" className="w-16 h-16" />
           <div>
             <h1 className="text-4xl font-bold text-primary mb-2">Service Request Details</h1>
             <p className="text-muted-foreground">Request ID: {request.id}</p>
+          </div>
           </div>
           <div className="flex gap-2 print-hide">
             {/* Only show action buttons if logged in */}
@@ -215,6 +220,7 @@ export default function ServiceRequestViewPage() {
         {/* Printable Content */}
         <div ref={printRef} className="print-content">
           {/* Print Header */}
+          
           <div className="print-show mb-6 text-center hidden">
             <h1 className="text-2xl font-bold mb-1">Abelov Technical Records</h1>
             <p className="text-sm text-muted-foreground">Service Request Report</p>

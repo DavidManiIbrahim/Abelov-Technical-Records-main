@@ -132,7 +132,7 @@ export default function AnalyticsDashboard() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold text-primary">₦{totalRevenue}</p>
+                <p className="text-2xl font-bold text-primary">₦{totalRevenue.toLocaleString()}</p>
               </div>
               <DollarSign className="w-8 h-8 text-green-500" />
             </div>
