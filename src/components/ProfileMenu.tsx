@@ -52,6 +52,7 @@ export default function ProfileMenu() {
       reader.onload = (e) => {
         const base64 = e.target?.result as string;
         setProfileImage(base64);
+        setHasChanges(true); // Enable save button
         // Save to localStorage for persistence
         localStorage.setItem('userProfileImage', base64);
       };
@@ -70,11 +71,30 @@ export default function ProfileMenu() {
     setHasChanges(newUsername !== originalUsername);
   };
 
-  const handleSaveChanges = () => {
-    localStorage.setItem('userUsername', username);
-    setOriginalUsername(username);
-    setHasChanges(false);
-    // Could add a toast notification here if needed
+  const handleSaveChanges = async () => {
+    try {
+      const updatedUser = await import('@/lib/api').then(m => m.authAPI.updateProfile({
+        username,
+        // Only send profile image if it changed (optimization)
+        ...(profileImage && { profile_image: profileImage })
+      }));
+
+      // Update localStorage for immediate feedback
+      localStorage.setItem('userUsername', username);
+      if (profileImage) {
+        localStorage.setItem('userProfileImage', profileImage);
+      }
+
+      setOriginalUsername(username);
+      setHasChanges(false);
+
+      // Update persistent session storage if needed
+      // Ideally AuthContext should be updated here
+      alert('Profile updated successfully');
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      alert('Failed to update profile');
+    }
   };
 
   const handleLogout = async () => {
@@ -82,17 +102,22 @@ export default function ProfileMenu() {
     await signOut();
   };
 
-  // Load profile image and username from localStorage on mount
+  // Load profile image and username from localStorage or User object on mount
   useEffect(() => {
-    const savedImage = localStorage.getItem('userProfileImage');
+    // @ts-ignore
+    const remoteImage = user?.profile_image;
+    // @ts-ignore
+    const remoteUsername = user?.username;
+
+    const savedImage = remoteImage || localStorage.getItem('userProfileImage');
     if (savedImage) {
       setProfileImage(savedImage);
     }
 
-    const savedUsername = localStorage.getItem('userUsername') || '';
+    const savedUsername = remoteUsername || localStorage.getItem('userUsername') || '';
     setUsername(savedUsername);
     setOriginalUsername(savedUsername);
-  }, []);
+  }, [user]);
 
   return (
     <div className="relative">

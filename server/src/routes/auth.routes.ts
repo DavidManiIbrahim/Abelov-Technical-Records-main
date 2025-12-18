@@ -51,4 +51,7 @@ router.post("/logout", ctrl.logout);
 router.options("/me", cors(corsOptions)); // Handle preflight explicitly
 router.get("/me", ctrl.me);
 
+router.options("/profile", cors(corsOptions));
+router.put("/profile", ctrl.updateProfile);
+
 export default router;

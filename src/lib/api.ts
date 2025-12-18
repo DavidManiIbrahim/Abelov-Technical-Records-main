@@ -254,4 +254,12 @@ export const authAPI = {
       method: 'POST',
     });
   },
+
+  async updateProfile(data: { username?: string; profile_image?: string }) {
+    const res = await apiFetch('/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    return res?.user || res;
+  },
 };

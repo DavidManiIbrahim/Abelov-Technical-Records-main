@@ -307,7 +307,7 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-600">Total Revenue</p>
                     <TrendingUp className="w-5 h-5 text-emerald-600" />
                   </div>
-                  <p className="text-3xl font-bold text-emerald-700">₦{(globalStats.totalRevenue || 0).toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-emerald-700">₦{(globalStats.totalRevenue || 0)}</p>
                   <p className="text-xs text-gray-500">Total earnings</p>
                  
                 </div>

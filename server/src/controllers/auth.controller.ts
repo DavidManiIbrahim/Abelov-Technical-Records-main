@@ -103,3 +103,46 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
   }
 };
 
+/**
+ * Update Profile - Update user's profile information (username, image)
+ */
+export const updateProfile = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    let token: string | null = null;
+    const cookies = req.cookies as Record<string, string>;
+    if (cookies.token) {
+      token = cookies.token;
+    } else {
+      const auth = req.headers.authorization || "";
+      const parts = auth.split(" ");
+      if (parts.length === 2 && parts[0] === "Bearer") {
+        token = parts[1];
+      }
+    }
+
+    if (!token) throw new ApiError(401, "Unauthorized");
+
+    const payload = verifyToken(token);
+    if (!payload || typeof payload.sub !== "string") throw new ApiError(401, "Unauthorized");
+
+    const { username, profile_image } = req.body;
+
+    // Validate inputs if necessary
+
+    const user = await UserModel.findByIdAndUpdate(
+      payload.sub,
+      {
+        ...(username !== undefined && { username }),
+        ...(profile_image !== undefined && { profile_image })
+      },
+      { new: true } // Return updated document
+    );
+
+    if (!user) throw new ApiError(404, "User not found");
+
+    res.json({ user: user.toJSON() });
+  } catch (err) {
+    next(err);
+  }
+};
+

@@ -3,6 +3,8 @@ import mongoose, { Schema, model } from "mongoose";
 const UserSchema = new Schema(
   {
     email: { type: String, required: true, unique: true, index: true },
+    username: { type: String, default: null },
+    profile_image: { type: String, default: null },
     roles: { type: [String], default: [] },
     is_active: { type: Boolean, default: true },
     password_hash: { type: String },
