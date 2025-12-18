@@ -411,7 +411,7 @@ export default function ServiceRequestViewPage() {
               <div className="flex flex-col items-center">
                 <p className="text-xs text-muted-foreground mb-2">Service Request QR Code</p>
                 <QRCode
-                  value={`https://abelov-technical-records-main.onrender.com/view/${request.id}`}
+                  value={`https://abelov-technical-records-main.onrender.com/#/view/${request.id}`}
                   size={128}
                 />
               </div>
