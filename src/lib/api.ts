@@ -8,6 +8,14 @@ const apiFetch = async (path: string, init?: RequestInit) => {
   const headers = {
     'Content-Type': 'application/json',
   };
+
+  // Add Authorization header if token exists in localStorage (read freshly on each request)
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    // @ts-ignore
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     credentials: 'include',
@@ -25,9 +33,9 @@ const apiFetch = async (path: string, init?: RequestInit) => {
 // Service Request API - All calls go to MongoDB backend
 export const serviceRequestAPI = {
   async create(request: Omit<ServiceRequest, 'id' | 'created_at' | 'updated_at'>) {
-    const res = await apiFetch('/requests', { 
-      method: 'POST', 
-      body: JSON.stringify(request) 
+    const res = await apiFetch('/requests', {
+      method: 'POST',
+      body: JSON.stringify(request)
     });
     const record = (res?.data || res) as ServiceRequest;
     setCache<ServiceRequest>(`service_request:${record.id}`, record);
@@ -58,9 +66,9 @@ export const serviceRequestAPI = {
   },
 
   async update(id: string, updates: Partial<ServiceRequest>) {
-    const res = await apiFetch(`/requests/${id}`, { 
-      method: 'PUT', 
-      body: JSON.stringify(updates) 
+    const res = await apiFetch(`/requests/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates)
     });
     const record = (res?.data || res) as ServiceRequest;
     setCache<ServiceRequest>(`service_request:${record.id}`, record);
@@ -111,25 +119,25 @@ export const adminAPI = {
 
   async getAllServiceRequests(limit = 100, offset = 0) {
     const res = await apiFetch(`/admin/requests?limit=${limit}&offset=${offset}`);
-    return { 
-      requests: (res?.data || res?.requests || []) as ServiceRequest[], 
-      total: res?.total || 0 
+    return {
+      requests: (res?.data || res?.requests || []) as ServiceRequest[],
+      total: res?.total || 0
     };
   },
 
   async getRequestsByStatus(status: string, limit = 100, offset = 0) {
     const res = await apiFetch(`/admin/requests?status=${status}&limit=${limit}&offset=${offset}`);
-    return { 
-      requests: (res?.data || res?.requests || []) as ServiceRequest[], 
-      total: res?.total || 0 
+    return {
+      requests: (res?.data || res?.requests || []) as ServiceRequest[],
+      total: res?.total || 0
     };
   },
 
   async getActivityLogs(limit = 50, offset = 0) {
     const res = await apiFetch(`/admin/logs?limit=${limit}&offset=${offset}`);
-    return { 
-      logs: (res?.data || res?.logs || []) as unknown[], 
-      total: res?.total || 0 
+    return {
+      logs: (res?.data || res?.logs || []) as unknown[],
+      total: res?.total || 0
     };
   },
 
@@ -148,9 +156,9 @@ export const adminAPI = {
 
   async searchRequests(query: string, limit = 50, offset = 0) {
     const res = await apiFetch(`/admin/requests/search?q=${encodeURIComponent(query)}&limit=${limit}&offset=${offset}`);
-    return { 
-      requests: (res?.data || res?.requests || []) as ServiceRequest[], 
-      total: res?.total || 0 
+    return {
+      requests: (res?.data || res?.requests || []) as ServiceRequest[],
+      total: res?.total || 0
     };
   },
 
@@ -200,6 +208,10 @@ export const authAPI = {
       body: JSON.stringify({ email, password }),
     });
     const user = res?.user || res;
+    // Attach token to user object so it can be saved in AuthContext
+    if (res?.token && typeof user === 'object') {
+      user.token = res.token;
+    }
     return user;
   },
 

@@ -111,7 +111,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           if (isMounted) {
             // If it's a 401 (unauthorized), clear the session
-            if (apiError.message?.includes('Unauthorized') || apiError.message?.includes('401')) {
+            const errMsg = (apiError as any).message || '';
+            if (errMsg.includes('Unauthorized') || errMsg.includes('401')) {
               setSession(null);
               setUser(null);
               setUserRoles([]);
@@ -173,6 +174,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUserRoles(roles);
 
       // Save to localStorage for persistence
+      localStorage.setItem('auth_token', result.token);
       saveSessionToStorage(sessionData, userData, roles);
     } catch (err) {
       await authAPI.logout();
@@ -186,6 +188,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserRoles([]);
 
     // Clear localStorage session data
+    localStorage.removeItem('auth_token');
     clearSessionFromStorage();
 
     // Clear all user-related persistent data
@@ -201,15 +204,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      session, 
-      user, 
-      loading, 
-      userRoles, 
-      isAdmin: userRoles.includes('admin'), 
-      signUp, 
-      signIn, 
-      signOut 
+    <AuthContext.Provider value={{
+      session,
+      user,
+      loading,
+      userRoles,
+      isAdmin: userRoles.includes('admin'),
+      signUp,
+      signIn,
+      signOut
     }}>
       {children}
     </AuthContext.Provider>
