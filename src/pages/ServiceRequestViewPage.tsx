@@ -189,29 +189,7 @@ export default function ServiceRequestViewPage() {
             <h1 className="text-4xl font-bold text-primary mb-2">Service Request Details</h1>
             <p className="text-muted-foreground">Request ID: {request.id}</p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={handlePrint} variant="outline" className="md:flex hidden">
-              <Printer className="w-4 h-4 mr-2" />
-              Print
-            </Button>
-            <Button onClick={handlePrint} variant="outline" className="md:hidden">
-              <Printer className="w-4 h-4" />
-            </Button>
-            <Button onClick={() => navigate(`/edit/${request.id}`)} variant="outline" className="md:flex hidden">
-              <Edit className="w-4 h-4 mr-2" />
-              Edit
-            </Button>
-            <Button onClick={() => navigate(`/edit/${request.id}`)} variant="outline" className="md:hidden">
-              <Edit className="w-4 h-4" />
-            </Button>
-            <Button onClick={() => navigate('/dashboard')} variant="outline" className="md:flex hidden">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <Button onClick={() => navigate('/dashboard')} variant="outline" className="md:hidden">
-              <ArrowLeft className="w-4 h-4" />
-            </Button>
-          </div>
+          {/* Buttons removed for public view */}
         </div>
 
         {/* Printable Content */}
@@ -389,17 +367,17 @@ export default function ServiceRequestViewPage() {
 
             {/* Customer Confirmation */}
             {request.customer_confirmation && (
-            <div className="print-hide pb-6 print-section-break">
-              <h3 className="text-lg font-semibold mb-3 text-primary">Confirmation</h3>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <DetailRow label="Device Collected" value={request.customer_confirmation.customer_collected} />
-                </div>
-                <div>
-                  <DetailRow label="Technician" value={request.customer_confirmation.technician} />
+              <div className="print-hide pb-6 print-section-break">
+                <h3 className="text-lg font-semibold mb-3 text-primary">Confirmation</h3>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <DetailRow label="Device Collected" value={request.customer_confirmation.customer_collected} />
+                  </div>
+                  <div>
+                    <DetailRow label="Technician" value={request.customer_confirmation.technician} />
+                  </div>
                 </div>
               </div>
-            </div>
             )}
 
             {/* Timestamps - Hide on Print */}
@@ -413,7 +391,7 @@ export default function ServiceRequestViewPage() {
               <div className="flex flex-col items-center">
                 <p className="text-xs text-muted-foreground mb-2">Service Request QR Code</p>
                 <QRCode
-                  value={`${window.location.origin}/view/${request.id}`}
+                  value={`https://abelov-technical-records-main.onrender.com/view/${request.id}`}
                   size={128}
                 />
               </div>
@@ -422,22 +400,7 @@ export default function ServiceRequestViewPage() {
         </div>
 
         {/* Action Buttons - Hide on Print */}
-        <div className="print-hide flex gap-4 mt-8">
-          <Button onClick={() => navigate(`/edit/${request.id}`)} className="flex-1 md:flex hidden">
-            <Edit className="w-4 h-4 mr-2" />
-            Edit Request
-          </Button>
-          <Button onClick={() => navigate(`/edit/${request.id}`)} className="md:hidden">
-            <Edit className="w-4 h-4" />
-          </Button>
-          <Button onClick={() => navigate('/dashboard')} variant="outline" className="flex-1 md:flex hidden">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Dashboard
-          </Button>
-          <Button onClick={() => navigate('/dashboard')} variant="outline" className="md:hidden">
-            <ArrowLeft className="w-4 h-4" />
-          </Button>
-        </div>
+        {/* Action Buttons - Removed for public view */}
       </div>
     </div>
   );
