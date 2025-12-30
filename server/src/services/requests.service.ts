@@ -32,15 +32,21 @@ export const recordPayment = async (id: string, amount: number, reference: strin
   const request = await RequestModel.findById(id);
   if (!request) return undefined;
 
-  // Calculate new balance
-  const currentBalance = request.balance || 0;
-  const newBalance = Math.max(0, currentBalance - amount);
+  // Calculate new values
+  const currentDeposit = request.deposit_paid || 0;
+  const newDeposit = currentDeposit + amount;
+
+  // Recalculate balance based on total cost and new deposit
+  // ensuring we don't rely solely on the previous balance field incase of inconsistency
+  const totalCost = request.total_cost || 0;
+  const newBalance = Math.max(0, totalCost - newDeposit);
   const isCompleted = newBalance <= 0;
 
   // Update request
   const updatedRequest = await RequestModel.findByIdAndUpdate(
     id,
     {
+      deposit_paid: newDeposit,
       balance: newBalance,
       payment_completed: isCompleted,
       // Add transaction record to timeline
