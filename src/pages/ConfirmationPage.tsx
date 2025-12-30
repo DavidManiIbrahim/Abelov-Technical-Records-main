@@ -134,23 +134,23 @@ export default function ConfirmationPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service Charge:</span>
-                <span className="font-medium">${request.service_charge.toFixed(2)}</span>
+                <span className="font-medium">${request.service_charge.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Parts Cost:</span>
-                <span className="font-medium">${request.parts_cost.toFixed(2)}</span>
+                <span className="font-medium">${request.parts_cost.toLocaleString()}</span>
               </div>
               <div className="flex justify-between border-t pt-2">
                 <span className="font-semibold">Total Cost:</span>
-                <span className="font-bold text-primary">${request.total_cost.toFixed(2)}</span>
+                <span className="font-bold text-primary">${request.total_cost.toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Deposit Paid:</span>
-                <span className="font-medium">${request.deposit_paid.toFixed(2)}</span>
+                <span className="font-medium">${request.deposit_paid.toLocaleString()}</span>
               </div>
               <div className="flex justify-between border-t pt-2">
                 <span className="font-semibold">Balance Due:</span>
-                <span className="font-bold text-destructive">${request.balance.toFixed(2)}</span>
+                <span className="font-bold text-destructive">${request.balance.toLocaleString()}</span>
               </div>
               <div className="flex justify-between items-center pt-2">
                 <span className="text-muted-foreground">Payment Status:</span>

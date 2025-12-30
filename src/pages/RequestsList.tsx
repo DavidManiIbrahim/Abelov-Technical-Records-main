@@ -125,11 +125,11 @@ export default function RequestsList() {
                   <div className="flex justify-between items-center mb-3">
                     <div>
                       <p className="text-xs text-muted-foreground">Total Cost</p>
-                      <p className="font-bold text-primary">₦{request.total_cost.toFixed(2)}</p>
+                      <p className="font-bold text-primary">₦{request.total_cost.toLocaleString()}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-muted-foreground">Balance</p>
-                      <p className="font-bold text-destructive">₦{request.balance.toFixed(2)}</p>
+                      <p className="font-bold text-destructive">₦{request.balance.toLocaleString()}</p>
                     </div>
                   </div>
                   <div className="flex gap-2">

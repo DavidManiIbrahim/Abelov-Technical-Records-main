@@ -54,7 +54,7 @@ const PaymentSection = ({ request, onPaymentSuccess }: { request: ServiceRequest
         className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white"
       >
         <CreditCard className="w-4 h-4 mr-2" />
-        Pay Balance (₦{request.balance.toFixed(2)})
+        Pay Balance (₦{request.balance.toLocaleString()})
       </Button>
     </div>
   );
@@ -192,7 +192,7 @@ export default function ServiceRequestViewPage() {
     /* 3. VISIBILITY CONTROLS */
     .print-hide {
       display: none !important;
-    }
+      }
     .print-show {
       display: block !important;
     }
@@ -387,19 +387,19 @@ export default function ServiceRequestViewPage() {
               <h3 className="text-lg font-semibold mb-3 text-primary">Costs</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <DetailRow label="Service" value={`₦${request.service_charge.toFixed(2)}`} />
+                  <DetailRow label="Service" value={`₦${request.service_charge.toLocaleString()}`} />
                 </div>
                 <div>
-                  <DetailRow label="Parts" value={`₦${request.parts_cost.toFixed(2)}`} />
+                  <DetailRow label="Parts" value={`₦${request.parts_cost.toLocaleString()}`} />
                 </div>
                 <div>
-                  <DetailRow label="Total" value={`₦${request.total_cost.toFixed(2)}`} />
+                  <DetailRow label="Total" value={`₦${request.total_cost.toLocaleString()}`} />
                 </div>
                 <div>
-                  <DetailRow label="Deposit" value={`₦${request.deposit_paid.toFixed(2)}`} />
+                  <DetailRow label="Deposit" value={`₦${request.deposit_paid.toLocaleString()}`} />
                 </div>
                 <div>
-                  <DetailRow label="Balance" value={`₦${request.balance.toFixed(2)}`} />
+                  <DetailRow label="Balance" value={`₦${request.balance.toLocaleString()}`} />
                 </div>
                 <div>
                   <DetailRow label="Payment" value={request.payment_completed ? 'Completed' : 'Pending'} />

@@ -301,12 +301,12 @@ export default function DashboardPage() {
                   <div className="flex justify-between text-sm">
                     <div>
                       <p className="text-xs text-muted-foreground">Total Cost</p>
-                      <p className="font-bold text-primary">₦{request.total_cost.toFixed(2)}</p>
+                      <p className="font-bold text-primary">₦{request.total_cost.toLocaleString()}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-xs text-muted-foreground">Balance</p>
                       <p className={`font-bold ${request.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        ₦{request.balance.toFixed(2)}
+                        ₦{request.balance.toLocaleString()}
                       </p>
                     </div>
                   </div>

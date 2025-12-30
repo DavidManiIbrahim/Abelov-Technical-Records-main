@@ -524,12 +524,12 @@ export default function ServiceRequestForm() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
               <div className="p-4 bg-accent rounded-md">
                 <Label>Total Cost</Label>
-                <p className="text-2xl font-bold text-primary">₦{formData.total_cost?.toFixed(2) || '0.00'}</p>
+                <p className="text-2xl font-bold text-primary">₦{formData.total_cost?.toLocaleString() || '0.00'}</p>
               </div>
               <div className="p-4 bg-accent rounded-md">
                 <Label>Balance</Label>
                 <p className={`text-2xl font-bold ${formData.balance! > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  ₦{formData.balance?.toFixed(2) || '0.00'}
+                  ₦{formData.balance?.toLocaleString() || '0.00'}
                 </p>
               </div>
             </div>
