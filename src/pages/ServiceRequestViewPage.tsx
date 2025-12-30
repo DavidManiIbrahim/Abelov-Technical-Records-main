@@ -459,21 +459,34 @@ export default function ServiceRequestViewPage() {
               <p>Last Updated: {new Date(request.updated_at).toLocaleString()}</p>
             </div>
 
-            {/* Payment Section - Prominent Button */}
-            {!request.payment_completed && request.balance > 0 && (
-              <div className="mt-6 pt-4 border-t text-center print-hide">
-                <h3 className="text-lg font-semibold mb-3 text-primary">Make Payment</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Please complete the payment to finalize your service request.
-                </p>
-                <div className="flex justify-center">
-                  <PaymentSection
-                    request={request}
-                    onPaymentSuccess={() => loadRequest(request.id)}
-                  />
+            {/* Payment Section - always visible logic */}
+            <div className="mt-6 pt-4 border-t text-center print-hide">
+              <h3 className="text-lg font-semibold mb-3 text-primary">Payment Status</h3>
+
+              {request.payment_completed ? (
+                <div className="p-4 bg-green-100 text-green-800 rounded-md inline-block">
+                  <p className="font-bold flex items-center justify-center gap-2">
+                    <span className="text-xl">✓</span> Payment Completed
+                  </p>
                 </div>
-              </div>
-            )}
+              ) : request.balance <= 0 ? (
+                <div className="p-4 bg-gray-100 text-gray-600 rounded-md inline-block">
+                  <p className="font-medium">No pending balance to pay.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Please complete the payment to finalize your service request.
+                  </p>
+                  <div className="flex justify-center">
+                    <PaymentSection
+                      request={request}
+                      onPaymentSuccess={() => loadRequest(request.id)}
+                    />
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* QR Code */}
             <div className="mt-6 pt-4 border-t text-center">
