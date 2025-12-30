@@ -116,6 +116,22 @@ export const serviceRequestAPI = {
     setCache(key, stats);
     return stats;
   },
+
+  async recordPayment(id: string, amount: number, reference: string) {
+    const res = await apiFetch(`/requests/${id}/payment`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, reference }),
+    });
+    const record = (res?.data || res) as ServiceRequest;
+    setCache<ServiceRequest>(`service_request:${record.id}`, record);
+    if (record.user_id) {
+      invalidateCache(`service_requests:${record.user_id}`);
+      invalidateCache(`stats:${record.user_id}`);
+    }
+    invalidateCache('admin_requests');
+    invalidateCache('admin_global_stats');
+    return record;
+  },
 };
 
 

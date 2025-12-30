@@ -27,3 +27,34 @@ export const deleteRequest = async (id: string): Promise<boolean> => {
   const res = await RequestModel.findByIdAndDelete(id);
   return !!res;
 };
+
+export const recordPayment = async (id: string, amount: number, reference: string): Promise<RequestEntity | undefined> => {
+  const request = await RequestModel.findById(id);
+  if (!request) return undefined;
+
+  // Calculate new balance
+  const currentBalance = request.balance || 0;
+  const newBalance = Math.max(0, currentBalance - amount);
+  const isCompleted = newBalance <= 0;
+
+  // Update request
+  const updatedRequest = await RequestModel.findByIdAndUpdate(
+    id,
+    {
+      balance: newBalance,
+      payment_completed: isCompleted,
+      // Add transaction record to timeline
+      $push: {
+        repair_timeline: {
+          step: "Payment Received",
+          date: new Date().toISOString(),
+          note: `Payment of ${amount} received. Ref: ${reference}`,
+          status: "Processed"
+        }
+      }
+    },
+    { new: true }
+  );
+
+  return updatedRequest?.toJSON() as any;
+};

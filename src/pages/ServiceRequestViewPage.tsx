@@ -6,12 +6,59 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { serviceRequestAPI } from '@/lib/api';
 import { ServiceRequest } from '@/types/database';
-import { ArrowLeft, Loader2, Printer, Edit } from 'lucide-react';
+import { ArrowLeft, Loader2, Printer, Edit, CreditCard } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
 import QRCode from 'react-qr-code';
 import abelovLogo from '@/assets/abelov-logo.png';
+import { usePaystackPayment } from 'react-paystack';
 
+const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY || 'pk_test_3b90c2da7d451e39902743a32258433b014f4f7a'; // Placeholder if not set
 
+const PaymentSection = ({ request, onPaymentSuccess }: { request: ServiceRequest; onPaymentSuccess: () => void }) => {
+  const config = {
+    reference: (new Date()).getTime().toString(),
+    email: request.customer_email || "customer@abelov.com",
+    amount: Math.ceil(request.balance * 100), // Amount in kobo
+    publicKey: PAYSTACK_PUBLIC_KEY,
+    currency: 'NGN',
+  };
+
+  const initializePayment = usePaystackPayment(config);
+
+  const onSuccess = async (reference: any) => {
+    try {
+      await serviceRequestAPI.recordPayment(request.id, request.balance, reference.reference);
+      toast({
+        title: "Payment Successful",
+        description: "Your payment has been recorded.",
+      });
+      onPaymentSuccess();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Payment successful but failed to update record. Please contact support.",
+        variant: "destructive",
+      });
+      console.error(error);
+    }
+  };
+
+  const onClose = () => {
+    // console.log('Payment closed');
+  };
+
+  return (
+    <div className="mt-4">
+      <Button
+        onClick={() => initializePayment({ onSuccess, onClose })}
+        className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white"
+      >
+        <CreditCard className="w-4 h-4 mr-2" />
+        Pay Balance (₦{request.balance.toFixed(2)})
+      </Button>
+    </div>
+  );
+};
 
 export default function ServiceRequestViewPage() {
   const { id } = useParams<{ id: string }>();
@@ -190,11 +237,11 @@ export default function ServiceRequestViewPage() {
         {/* Header - Hide on Print */}
         <div className="print-hide mb-8 flex items-center justify-between">
           <div className="flex items-center gap-4 rounded-full">
-          <img src={abelovLogo} alt="Abelov Logo" className="w-16 h-16" />
-          <div>
-            <h1 className="text-4xl font-bold text-primary mb-2">Service Request Details</h1>
-            <p className="text-muted-foreground">Request ID: {request.id}</p>
-          </div>
+            <img src={abelovLogo} alt="Abelov Logo" className="w-16 h-16" />
+            <div>
+              <h1 className="text-4xl font-bold text-primary mb-2">Service Request Details</h1>
+              <p className="text-muted-foreground">Request ID: {request.id}</p>
+            </div>
           </div>
           <div className="flex gap-2 print-hide">
             {/* Only show action buttons if logged in */}
@@ -220,7 +267,7 @@ export default function ServiceRequestViewPage() {
         {/* Printable Content */}
         <div ref={printRef} className="print-content">
           {/* Print Header */}
-          
+
           <div className="print-show mb-6 text-center hidden">
             <h1 className="text-2xl font-bold mb-1">Abelov Technical Records</h1>
             <p className="text-sm text-muted-foreground">Service Request Report</p>
@@ -411,6 +458,22 @@ export default function ServiceRequestViewPage() {
               <p>Created: {new Date(request.created_at).toLocaleString()}</p>
               <p>Last Updated: {new Date(request.updated_at).toLocaleString()}</p>
             </div>
+
+            {/* Payment Section - Prominent Button */}
+            {!request.payment_completed && request.balance > 0 && (
+              <div className="mt-6 pt-4 border-t text-center print-hide">
+                <h3 className="text-lg font-semibold mb-3 text-primary">Make Payment</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Please complete the payment to finalize your service request.
+                </p>
+                <div className="flex justify-center">
+                  <PaymentSection
+                    request={request}
+                    onPaymentSuccess={() => loadRequest(request.id)}
+                  />
+                </div>
+              </div>
+            )}
 
             {/* QR Code */}
             <div className="mt-6 pt-4 border-t text-center">

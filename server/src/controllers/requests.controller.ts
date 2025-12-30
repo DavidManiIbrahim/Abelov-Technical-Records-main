@@ -8,6 +8,7 @@ import {
   createRequest,
   updateRequest,
   deleteRequest,
+  recordPayment as recordPaymentService,
 } from "../services/requests.service";
 
 export const getAll = async (_req: Request, res: Response) => {
@@ -51,11 +52,23 @@ export const remove = async (req: Request, res: Response, next: NextFunction) =>
   res.status(204).send();
 };
 
+export const recordPayment = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+    const { amount, reference } = req.body;
+    const entity = await recordPaymentService(id, amount, reference);
+    if (!entity) return next(new ApiError(404, "Request not found"));
+    res.json({ data: entity });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getStats = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { userId } = req.params;
     const requests = await RequestModel.find({ user_id: userId });
-    
+
     const stats = {
       total: requests.length,
       pending: requests.filter((r: any) => r.status === "Pending").length,
@@ -64,7 +77,7 @@ export const getStats = async (req: Request, res: Response, next: NextFunction) 
       onHold: requests.filter((r: any) => r.status === "On-Hold").length,
       totalRevenue: requests.reduce((sum: number, r: any) => sum + (r.total_cost || 0), 0),
     };
-    
+
     res.json({ data: stats });
   } catch (err) {
     next(err);
