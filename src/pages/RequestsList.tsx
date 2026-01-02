@@ -51,7 +51,7 @@ export default function RequestsList() {
               <h1 className="text-4xl font-bold text-primary mb-2">Service Requests</h1>
               <p className="text-muted-foreground">View and manage all service requests</p>
             </div>
-            <Button onClick={() => navigate("/")}>
+            <Button onClick={() => navigate("/new-request")}>
               <Plus className="w-4 h-4 mr-2" />
               New Request
             </Button>
@@ -82,7 +82,7 @@ export default function RequestsList() {
             <FileText className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold mb-2">No Service Requests Yet</h3>
             <p className="text-muted-foreground mb-6">Create your first service request to get started.</p>
-            <Button onClick={() => navigate("/")}>
+            <Button onClick={() => navigate("/new-request")}>
               <Plus className="w-4 h-4 mr-2" />
               Create Service Request
             </Button>

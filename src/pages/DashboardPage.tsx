@@ -251,11 +251,11 @@ export default function DashboardPage() {
               className="pl-10"
             />
           </div>
-          <Button onClick={() => navigate('/')} size="lg" className="md:flex hidden">
+          <Button onClick={() => navigate('/new-request')} size="lg" className="md:flex hidden">
             <Plus className="w-4 h-4 mr-2" />
             New Request
           </Button>
-          <Button onClick={() => navigate('/')} size="lg" className="md:hidden">
+          <Button onClick={() => navigate('/new-request')} size="lg" className="md:hidden">
             <Plus className="w-4 h-4" />
           </Button>
         </div>
@@ -273,7 +273,7 @@ export default function DashboardPage() {
             <p className="text-muted-foreground mb-6">
               {searchQuery ? 'Try adjusting your search query.' : 'Create your first service request to get started.'}
             </p>
-            <Button onClick={() => navigate('/')}>
+            <Button onClick={() => navigate('/new-request')}>
               <Plus className="w-4 h-4 mr-2" />
               Create Service Request
             </Button>

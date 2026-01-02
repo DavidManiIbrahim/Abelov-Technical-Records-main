@@ -12,9 +12,9 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { toast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { serviceRequestAPI } from '@/lib/api';
-import { ServiceRequest, RepairTimelineStep } from '@/types/database';
-import { Plus, Trash2, Loader2, LogOut, Home } from 'lucide-react';
-import { FaStore, FaUser, FaLaptop, FaExclamationTriangle, FaTools, FaMoneyBill, FaCalendarAlt, FaCheckCircle } from 'react-icons/fa';
+import { ServiceRequest } from '@/types/database';
+import { Loader2, LogOut, Home } from 'lucide-react';
+import { FaStore, FaUser, FaLaptop, FaExclamationTriangle, FaTools, FaMoneyBill, FaCheckCircle } from 'react-icons/fa';
 import abelovLogo from '@/assets/abelov-logo.png';
 
 
@@ -45,6 +45,7 @@ export default function ServiceRequestForm() {
 
   // Default form data
   const getDefaultFormData = (): Partial<ServiceRequest> => ({
+    shop_name: '',
     technician_name: '',
     request_date: new Date().toISOString().split('T')[0],
     customer_name: '',
@@ -62,14 +63,13 @@ export default function ServiceRequestForm() {
     fault_found: '',
     parts_used: '',
     repair_action: '',
-    status: 'Pending',
+    status: 'Pending' as const,
     service_charge: 0,
     parts_cost: 0,
     total_cost: 0,
     deposit_paid: 0,
     balance: 0,
     payment_completed: false,
-    repair_timeline: [],
     customer_confirmation: {
       customer_collected: false,
       technician: '',
@@ -80,12 +80,6 @@ export default function ServiceRequestForm() {
   const [formData, setFormData] = usePersistentFormState(
     isEditMode ? `edit_form_${id}` : 'new_request_form',
     getDefaultFormData()
-  );
-
-  // Persistent state for timeline steps
-  const [timelineSteps, setTimelineSteps] = usePersistentFormState(
-    isEditMode ? `edit_timeline_${id}` : 'new_request_timeline',
-    [{ step: '', date: '', note: '', status: '' }]
   );
 
   useEffect(() => {
@@ -100,11 +94,6 @@ export default function ServiceRequestForm() {
     try {
       const request = await serviceRequestAPI.getById(requestId);
       setFormData(request);
-      setTimelineSteps(
-        request.repair_timeline && request.repair_timeline.length > 0
-          ? request.repair_timeline
-          : [{ step: '', date: '', note: '', status: '' }]
-      );
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to load request';
       toast({
@@ -135,20 +124,6 @@ export default function ServiceRequestForm() {
     }));
   };
 
-  const addTimelineStep = () => {
-    setTimelineSteps([...timelineSteps, { step: '', date: '', note: '', status: '' }]);
-  };
-
-  const removeTimelineStep = (index: number) => {
-    setTimelineSteps(timelineSteps.filter((_, i) => i !== index));
-  };
-
-  const updateTimelineStep = (index: number, field: keyof RepairTimelineStep, value: string) => {
-    const updated = [...timelineSteps];
-    updated[index] = { ...updated[index], [field]: value };
-    setTimelineSteps(updated);
-  };
-
   const handleSubmit = async () => {
     if (!user?.id) {
       toast({
@@ -162,12 +137,9 @@ export default function ServiceRequestForm() {
     setSubmitting(true);
 
     try {
-      const filteredTimeline = timelineSteps.filter((step) => step.step.trim() !== '');
-
       if (isEditMode && id) {
         const updateData: Partial<ServiceRequest> = {
           ...formData,
-          repair_timeline: filteredTimeline,
           updated_at: new Date().toISOString(),
         };
         await serviceRequestAPI.update(id, updateData);
@@ -179,6 +151,7 @@ export default function ServiceRequestForm() {
         // For new requests we only submit the core fields (stop at Problem Description).
         const newRequest = {
           user_id: user.id,
+          shop_name: formData.shop_name || '',
           technician_name: formData.technician_name || '',
           request_date: formData.request_date || new Date().toISOString().split('T')[0],
           customer_name: formData.customer_name || '',
@@ -198,6 +171,7 @@ export default function ServiceRequestForm() {
           deposit_paid: formData.deposit_paid || 0,
           balance: formData.balance || 0,
           payment_completed: formData.payment_completed || false,
+          repair_timeline: [],
         };
         await serviceRequestAPI.create(newRequest as unknown as Omit<ServiceRequest, 'id' | 'created_at' | 'updated_at'>);
         toast({
@@ -210,7 +184,6 @@ export default function ServiceRequestForm() {
       if (!isEditMode) {
         persistentState.clearFormState('new_request_form');
         persistentState.clearFormState('new_request_step');
-        persistentState.clearFormState('new_request_timeline');
       }
 
       navigate('/dashboard');
@@ -271,8 +244,7 @@ export default function ServiceRequestForm() {
         return (
           <Card className="p-6">
             <h2 className="text-2xl font-semibold mb-4 text-primary">Shop Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="technician_name">Technician Name</Label>
                 <Input

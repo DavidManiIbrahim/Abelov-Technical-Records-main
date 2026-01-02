@@ -407,37 +407,6 @@ export default function ServiceRequestViewPage() {
               </div>
             </div>
 
-            {/* Timeline */}
-            {request.repair_timeline && request.repair_timeline.length > 0 && (
-              <div className="print-hide mb-6 pb-6 print-section-break">
-                <h3 className="text-lg font-semibold mb-3 text-primary">Timeline</h3>
-                <div className="space-y-3">
-                  {request.repair_timeline.map((step, index) => (
-                    <div key={index} className="p-3 border rounded text-sm">
-                      <div className="grid grid-cols-4 gap-2">
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">Step</p>
-                          <p className="font-semibold">{step.step}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">Date</p>
-                          <p className="font-semibold">{new Date(step.date).toLocaleDateString()}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">Status</p>
-                          <p className="font-semibold">{step.status}</p>
-                        </div>
-                        <div>
-                          <p className="text-xs font-medium text-muted-foreground">Note</p>
-                          <p className="font-semibold">{step.note || '-'}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             {/* Customer Confirmation */}
             {request.customer_confirmation && (
               <div className="print-hide pb-6 print-section-break">

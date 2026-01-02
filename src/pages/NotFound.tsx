@@ -17,7 +17,7 @@ const NotFound = () => {
           <Button onClick={() => navigate('/dashboard')} className="w-full">
             Go to Dashboard
           </Button>
-          <Button onClick={() => navigate('/')} variant="outline" className="w-full">
+          <Button onClick={() => navigate('/new-request')} variant="outline" className="w-full">
             Create New Request
           </Button>
         </div>
