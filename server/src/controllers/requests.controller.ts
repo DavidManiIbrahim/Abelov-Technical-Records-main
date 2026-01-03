@@ -11,22 +11,42 @@ import {
   recordPayment as recordPaymentService,
 } from "../services/requests.service";
 
-export const getAll = async (_req: Request, res: Response) => {
-  const data = await listRequests();
-  res.json({ data });
+export const getAll = async (req: Request, res: Response) => {
+  const user = (req as any).user;
+  const isAdmin = user.roles.includes("admin");
+
+  const data = await RequestModel.find(isAdmin ? {} : { user_id: user.id })
+    .sort({ created_at: -1 });
+
+  res.json({ data: data.map(d => (d as any).toJSON()) });
 };
 
 export const getById = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
-  const entity = await getRequestById(id);
+  const user = (req as any).user;
+  const isAdmin = user.roles.includes("admin");
+
+  const entity = await RequestModel.findById(id);
   if (!entity) return next(new ApiError(404, "Request not found"));
-  res.json({ data: entity });
+
+  if (!isAdmin && entity.user_id !== user.id.toString()) {
+    return next(new ApiError(403, "Forbidden - Access denied to this request"));
+  }
+
+  res.json({ data: (entity as any).toJSON() });
 };
 
 export const create = async (req: Request, res: Response, next: NextFunction) => {
   try {
+    const user = (req as any).user;
     const parsed = RequestSchema.parse(req.body);
-    const entity = await createRequest(parsed);
+
+    // Force user_id to be the authenticated user
+    const entity = await createRequest({
+      ...parsed,
+      user_id: user.id
+    } as any);
+
     res.status(201).json({ data: entity });
   } catch (err) {
     next(err);
@@ -36,9 +56,22 @@ export const create = async (req: Request, res: Response, next: NextFunction) =>
 export const update = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const user = (req as any).user;
+    const isAdmin = user.roles.includes("admin");
+
+    const existing = await RequestModel.findById(id);
+    if (!existing) return next(new ApiError(404, "Request not found"));
+
+    if (!isAdmin && existing.user_id !== user.id.toString()) {
+      return next(new ApiError(403, "Forbidden - Access denied"));
+    }
+
     const parsed = RequestUpdateSchema.parse(req.body);
+
+    // Prevent changing user_id through update
+    delete (parsed as any).user_id;
+
     const entity = await updateRequest(id, parsed);
-    if (!entity) return next(new ApiError(404, "Request not found"));
     res.json({ data: entity });
   } catch (err) {
     next(err);
@@ -47,22 +80,41 @@ export const update = async (req: Request, res: Response, next: NextFunction) =>
 
 export const remove = async (req: Request, res: Response, next: NextFunction) => {
   const { id } = req.params;
+  const user = (req as any).user;
+  const isAdmin = user.roles.includes("admin");
+
+  const existing = await RequestModel.findById(id);
+  if (!existing) return next(new ApiError(404, "Request not found"));
+
+  if (!isAdmin && existing.user_id !== user.id.toString()) {
+    return next(new ApiError(403, "Forbidden"));
+  }
+
   const ok = await deleteRequest(id);
-  if (!ok) return next(new ApiError(404, "Request not found"));
   res.status(204).send();
 };
 
 export const recordPayment = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
+    const user = (req as any).user;
+    const isAdmin = user.roles.includes("admin");
+
+    const existing = await RequestModel.findById(id);
+    if (!existing) return next(new ApiError(404, "Request not found"));
+
+    if (!isAdmin && existing.user_id !== user.id.toString()) {
+      return next(new ApiError(403, "Forbidden"));
+    }
+
     const { amount, reference } = req.body;
     const entity = await recordPaymentService(id, amount, reference);
-    if (!entity) return next(new ApiError(404, "Request not found"));
     res.json({ data: entity });
   } catch (err) {
     next(err);
   }
 };
+
 
 export const getStats = async (req: Request, res: Response, next: NextFunction) => {
   try {

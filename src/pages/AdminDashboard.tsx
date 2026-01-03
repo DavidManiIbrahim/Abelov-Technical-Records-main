@@ -141,19 +141,50 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleDeleteUser = async (id: string) => {
-    if (!window.confirm('Deactivate this user? (This will disable their account)')) return;
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [newUserRole, setNewUserRole] = useState('user');
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
     try {
-      await adminAPI.toggleUserStatus(id, false);
-      await loadData();
-      toast({ title: 'Success', description: 'User account has been deactivated' });
-    } catch {
-      toast({ title: 'Error', description: 'Failed to deactivate user', variant: 'destructive' });
+      await adminAPI.createUser({
+        email: newUserEmail,
+        password: newUserPassword,
+        roles: [newUserRole]
+      });
+      toast({ title: 'Success', description: 'User created successfully' });
+      setIsCreatingUser(false);
+      setNewUserEmail('');
+      setNewUserPassword('');
+      loadData();
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to create user',
+        variant: 'destructive'
+      });
     } finally {
       setLoading(false);
     }
   };
+
+  const handleDeleteUser = async (id: string) => {
+    if (!window.confirm('Are you sure you want to PERMANENTLY delete this user? This action cannot be undone.')) return;
+    setLoading(true);
+    try {
+      await adminAPI.deleteUser(id);
+      await loadData();
+      toast({ title: 'Success', description: 'User has been deleted' });
+    } catch (error: any) {
+      toast({ title: 'Error', description: error.message || 'Failed to delete user', variant: 'destructive' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const handleLogout = async () => {
     try {
@@ -441,7 +472,56 @@ export default function AdminDashboard() {
             {/* Users Tab */}
             <TabsContent value="users" className="space-y-4">
               <Card className="p-6">
-                {loading ? (
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-lg font-semibold text-primary">System Users</h3>
+                  <Button onClick={() => setIsCreatingUser(!isCreatingUser)} variant={isCreatingUser ? "ghost" : "default"}>
+                    {isCreatingUser ? "Cancel" : "Add New User"}
+                  </Button>
+                </div>
+
+                {isCreatingUser && (
+                  <Card className="p-4 mb-6 border-primary/20 bg-muted/30">
+                    <form onSubmit={handleCreateUser} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Email Address (@abelov.ng required)</label>
+                        <Input
+                          placeholder="e.g. staff@abelov.ng"
+                          value={newUserEmail}
+                          onChange={(e) => setNewUserEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">Initial Password</label>
+                        <Input
+                          type="password"
+                          placeholder="Min 12 characters"
+                          value={newUserPassword}
+                          onChange={(e) => setNewUserPassword(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium uppercase tracking-wider text-muted-foreground">User Role</label>
+                        <Select value={newUserRole} onValueChange={setNewUserRole}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User (Staff/Technician)</SelectItem>
+                            <SelectItem value="admin">Administrator</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button type="submit" disabled={loading} className="w-full">
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Create User Account"}
+                      </Button>
+                    </form>
+                  </Card>
+                )}
+
+                {loading && !users.length ? (
+
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-primary" />
                   </div>

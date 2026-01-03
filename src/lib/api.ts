@@ -269,7 +269,23 @@ export const adminAPI = {
     });
     return res?.data || res;
   },
+
+  async createUser(data: any) {
+    const res = await apiFetch('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return res?.data || res;
+  },
+
+  async deleteUser(userId: string) {
+    const res = await apiFetch(`/admin/users/${userId}`, {
+      method: 'DELETE',
+    });
+    return res?.data || res;
+  },
 };
+
 
 // Auth API - all calls go to backend, token cached after success
 export const authAPI = {

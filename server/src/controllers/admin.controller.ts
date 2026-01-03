@@ -3,6 +3,9 @@ import { ApiError } from "../middlewares/error";
 import { ensureAdminWithSampleRequest } from "../services/admin.service";
 import { RequestModel } from "../models/request.model";
 import { UserModel } from "../models/user.model";
+import { hashPassword } from "../utils/auth";
+import { SignupSchema } from "../types/auth";
+
 
 export const initAdmin = async (_req: Request, res: Response) => {
   const result = await ensureAdminWithSampleRequest();
@@ -68,7 +71,60 @@ export const getAllUsers = async (_req: Request, res: Response, next: NextFuncti
   }
 };
 
+export const createUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { email, password, roles } = req.body;
+
+    // Validate input using SignupSchema (handles domain and password rules)
+    SignupSchema.parse({ email, password });
+
+    const exists = await UserModel.findOne({ email });
+    if (exists) throw new ApiError(409, "User with this email already exists");
+
+    const { salt, hash } = hashPassword(password);
+    const user = await UserModel.create({
+      email,
+      password_hash: hash,
+      password_salt: salt,
+      roles: roles || ["user"],
+      is_active: true
+    } as any);
+
+    res.status(201).json({
+      message: "User created successfully",
+      data: user.toJSON()
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+export const deleteUser = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+
+    const user = await UserModel.findById(id);
+    if (!user) throw new ApiError(404, "User not found");
+
+    // Prevent deleting yourself (the current admin)
+    const currentUser = (req as any).user;
+    if (user.id === currentUser.id.toString()) {
+      throw new ApiError(400, "You cannot delete your own admin account");
+    }
+
+    await UserModel.findByIdAndDelete(id);
+
+    // Also cleanup requests associated with this user? 
+    // Usually better to keep them or reassign, but I'll leave them for now unless asked.
+
+    res.json({ message: "User deleted successfully" });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getAllRequests = async (req: Request, res: Response, next: NextFunction) => {
+
   try {
     const { limit = 20, offset = 0, status } = req.query;
     const limitNum = Math.min(parseInt(limit as string) || 20, 1000);
@@ -83,7 +139,7 @@ export const getAllRequests = async (req: Request, res: Response, next: NextFunc
       .limit(limitNum)
       .skip(offsetNum);
 
-    res.json({ 
+    res.json({
       data: requests,
       total,
       limit: limitNum,
@@ -120,7 +176,7 @@ export const searchRequests = async (req: Request, res: Response, next: NextFunc
       .limit(limitNum)
       .skip(offsetNum);
 
-    res.json({ 
+    res.json({
       data: requests,
       total,
     });

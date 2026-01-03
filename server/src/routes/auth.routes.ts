@@ -1,9 +1,21 @@
 import { Router } from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
 import * as ctrl from "../controllers/auth.controller";
 import { authenticate } from "../middlewares/auth";
 
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // Limit each IP to 5 requests per window for registration/login
+  message: { error: "Too many authentication attempts, please try again after 15 minutes" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 const router = Router();
+// Apply strict rate limiting to all auth routes
+router.use(authRateLimiter);
+
 
 // Production-ready CORS configuration for auth routes
 const allowedOrigins = [
@@ -46,9 +58,12 @@ const corsOptions = {
 
 router.use(cors(corsOptions));
 
-// router.post("/signup", ctrl.signup);
+// Registration is now handled by admin only
+// router.post("/register", ctrl.signup);
 router.post("/login", ctrl.login);
 router.post("/logout", ctrl.logout);
+
+
 
 // Protected routes
 router.get("/me", authenticate, ctrl.me);

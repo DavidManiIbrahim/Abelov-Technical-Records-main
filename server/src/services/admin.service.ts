@@ -5,24 +5,30 @@ import { hashPassword } from "../utils/auth";
 import { logger } from "../middlewares/logger";
 
 export const ensureAdminWithSampleRequest = async () => {
-  const adminEmail = env.ADMIN_EMAIL || "admin@abelov.ng";
-  const defaultPassword = "admin"; // Simple default password for dev/setup
+  const adminEmail = env.ADMIN_EMAIL;
+  const adminPassword = process.env.ADMIN_PASSWORD;
+
+  if (!adminEmail || !adminPassword) {
+    logger.warn("ADMIN_EMAIL or ADMIN_PASSWORD not set. Skipping admin auto-creation.");
+    return { adminCreated: false, requestCreated: false };
+  }
 
   let adminDoc = await UserModel.findOne({ email: adminEmail });
   let adminCreated = false;
   if (!adminDoc) {
     logger.info(`Creating admin user: ${adminEmail}`);
-    const { salt, hash } = hashPassword(defaultPassword);
-    adminDoc = await UserModel.create({ 
-      email: adminEmail, 
-      roles: ["admin"], 
+    const { salt, hash } = hashPassword(adminPassword);
+    adminDoc = await UserModel.create({
+      email: adminEmail,
+      roles: ["admin"],
       is_active: true,
       password_hash: hash,
       password_salt: salt
     } as any);
     adminCreated = true;
-    logger.info(`Admin user created with password: ${defaultPassword}`);
+    logger.info("Admin user created from environment variables.");
   }
+
 
   const admin = adminDoc.toJSON() as any;
 
