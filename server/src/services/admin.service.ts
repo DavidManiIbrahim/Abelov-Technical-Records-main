@@ -1,15 +1,27 @@
 import { env } from "../config/env";
 import { UserModel } from "../models/user.model";
 import { RequestModel } from "../models/request.model";
+import { hashPassword } from "../utils/auth";
+import { logger } from "../middlewares/logger";
 
 export const ensureAdminWithSampleRequest = async () => {
   const adminEmail = env.ADMIN_EMAIL || "admin@abelov.ng";
+  const defaultPassword = "admin"; // Simple default password for dev/setup
 
   let adminDoc = await UserModel.findOne({ email: adminEmail });
   let adminCreated = false;
   if (!adminDoc) {
-    adminDoc = await UserModel.create({ email: adminEmail, roles: ["admin"], is_active: true } as any);
+    logger.info(`Creating admin user: ${adminEmail}`);
+    const { salt, hash } = hashPassword(defaultPassword);
+    adminDoc = await UserModel.create({ 
+      email: adminEmail, 
+      roles: ["admin"], 
+      is_active: true,
+      password_hash: hash,
+      password_salt: salt
+    } as any);
     adminCreated = true;
+    logger.info(`Admin user created with password: ${defaultPassword}`);
   }
 
   const admin = adminDoc.toJSON() as any;
@@ -17,6 +29,7 @@ export const ensureAdminWithSampleRequest = async () => {
   let existing = await RequestModel.findOne({ user_id: admin.id });
   let requestCreated = false;
   if (!existing) {
+    logger.info("Creating sample service request...");
     const sample = {
       shop_name: "Abelov Technical Records",
       technician_name: "Admin Technician",
@@ -44,9 +57,11 @@ export const ensureAdminWithSampleRequest = async () => {
       balance: 50000,
       payment_completed: false,
       user_id: admin.id,
+      repair_timeline: [], // Initialize with empty timeline as per new schema
     };
     existing = await RequestModel.create(sample as any);
     requestCreated = true;
+    logger.info("Sample service request created");
   }
 
   const request = existing ? (existing.toJSON() as any) : undefined;

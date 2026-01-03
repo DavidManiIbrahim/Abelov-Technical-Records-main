@@ -2,7 +2,30 @@ import { ServiceRequest } from '@/types/database';
 import { getCache, setCache, invalidateCache } from '@/utils/storage';
 
 // Memory cache keys (in-memory cache only, no persistence)
-const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || (import.meta.env.DEV ? 'http://localhost:4000/api/v1' : 'https://abelov-technical-records-backend.onrender.com/api/v1');
+const getApiBase = () => {
+  // 1. Prefer explicit environment variable
+  if (import.meta.env.VITE_API_BASE_URL) {
+    return import.meta.env.VITE_API_BASE_URL as string;
+  }
+
+  // 2. Check if running on localhost (runtime check)
+  // This ensures that even a production build running locally uses local backend
+  // and prevents deployed app from trying to hit localhost
+  if (typeof window !== 'undefined') {
+    const isLocal = window.location.hostname === 'localhost' || 
+                    window.location.hostname === '127.0.0.1' ||
+                    window.location.hostname.includes('192.168.');
+    if (isLocal) {
+      return 'http://localhost:4000/api/v1';
+    }
+  }
+
+  // 3. Fallback to production backend
+  return 'https://abelov-technical-records-backend.onrender.com/api/v1';
+};
+
+const API_BASE = getApiBase();
+console.log('API Base URL:', API_BASE);
 
 const apiFetch = async (path: string, init?: RequestInit) => {
   const headers = {

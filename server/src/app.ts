@@ -25,6 +25,7 @@ export const createApp = () => {
   const allowedOrigins = [
     // Production frontend (Render deployment)
     "https://abelov-technical-records-main.onrender.com",
+    "https://abelov-technical-records.onrender.com",
     // Development frontend
     "http://localhost:8080",
     "http://localhost:8081",
