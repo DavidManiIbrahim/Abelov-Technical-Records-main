@@ -36,8 +36,23 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
     const { email, password } = LoginSchema.parse(req.body);
     const doc = await UserModel.findOne({ email });
     if (!doc) throw new ApiError(401, "Invalid credentials");
+
+    const isLegacy = !(doc as any).password_hash.startsWith("$2y$") &&
+      !(doc as any).password_hash.startsWith("$2a$") &&
+      !(doc as any).password_hash.startsWith("$2b$");
+
     const ok = verifyPassword(password, (doc as any).password_salt, (doc as any).password_hash);
     if (!ok) throw new ApiError(401, "Invalid credentials");
+
+    // Auto-upgrade legacy hashes to bcrypt
+    if (isLegacy) {
+      const { salt: newSalt, hash: newHash } = hashPassword(password);
+      await UserModel.findByIdAndUpdate(doc.id, {
+        password_hash: newHash,
+        password_salt: newSalt
+      });
+    }
+
     const user = doc.toJSON() as any;
     const token = createToken({ sub: user.id, email: user.email }, 604800);
     const isProduction = process.env.NODE_ENV === "production";
