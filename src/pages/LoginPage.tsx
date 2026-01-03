@@ -38,7 +38,7 @@ export default function LoginPage() {
           setIsLoading(false);
           return;
         }
-        
+
         // Validate password strength
         if (formData.password.length < 6) {
           toast({
@@ -92,7 +92,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center p-4 relative bg-cover bg-center bg-no-repeat"
       style={{ backgroundImage: `url(${loginBackground})` }}
     >
@@ -178,7 +178,7 @@ export default function LoginPage() {
           </Button>
         </form>
 
-        <div className="mt-6">
+        {/* <div className="mt-6">
           <button
             type="button"
             onClick={() => {
@@ -190,7 +190,7 @@ export default function LoginPage() {
           >
             {isSignUp ? 'Already have an account? Login' : "Don't have an account? Sign up"}
           </button>
-        </div>
+        </div> */}
       </Card>
     </div>
   );
