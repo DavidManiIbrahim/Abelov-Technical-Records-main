@@ -80,11 +80,29 @@ export const serviceRequestAPI = {
       const cached = getCache<ServiceRequest | null>(`service_request:${id}`);
       if (cached) return cached;
     }
-    const res = await apiFetch(`/requests/${id}`);
-    const record = (res?.data || res) as ServiceRequest;
-    setCache<ServiceRequest>(`service_request:${id}`, record);
-    return record;
+
+    // Try the regular endpoint first (for authenticated users)
+    // If not authenticated, the fetch helper handles authentication if token is available
+    const token = localStorage.getItem('auth_token');
+    const endpoint = token ? `/requests/${id}` : `/requests/public/${id}`;
+
+    try {
+      const res = await apiFetch(endpoint);
+      const record = (res?.data || res) as ServiceRequest;
+      setCache<ServiceRequest>(`service_request:${id}`, record);
+      return record;
+    } catch (err) {
+      // Fallback to public if regular fails
+      if (token) {
+        const res = await apiFetch(`/requests/public/${id}`);
+        const record = (res?.data || res) as ServiceRequest;
+        setCache<ServiceRequest>(`service_request:${id}`, record);
+        return record;
+      }
+      throw err;
+    }
   },
+
 
   async getByUserId(userId: string, forceRefresh = false) {
     const key = `service_requests:${userId}`;
@@ -148,7 +166,10 @@ export const serviceRequestAPI = {
   },
 
   async recordPayment(id: string, amount: number, reference: string) {
-    const res = await apiFetch(`/requests/${id}/payment`, {
+    const token = localStorage.getItem('auth_token');
+    const endpoint = token ? `/requests/${id}/payment` : `/requests/public/${id}/payment`;
+
+    const res = await apiFetch(endpoint, {
       method: 'POST',
       body: JSON.stringify({ amount, reference }),
     });
@@ -163,6 +184,7 @@ export const serviceRequestAPI = {
     invalidateCache('service_requests');
     return record;
   },
+
 };
 
 

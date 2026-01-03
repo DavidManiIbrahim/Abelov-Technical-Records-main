@@ -98,16 +98,20 @@ export const recordPayment = async (req: Request, res: Response, next: NextFunct
   try {
     const { id } = req.params;
     const user = (req as any).user;
-    const isAdmin = user.roles.includes("admin");
 
     const existing = await RequestModel.findById(id);
     if (!existing) return next(new ApiError(404, "Request not found"));
 
-    if (!isAdmin && existing.user_id !== user.id.toString()) {
-      return next(new ApiError(403, "Forbidden"));
+    // If authenticated, check ownership. If public, we allow it (for QR code payments).
+    if (user) {
+      const isAdmin = user.roles.includes("admin");
+      if (!isAdmin && existing.user_id !== user.id.toString()) {
+        return next(new ApiError(403, "Forbidden - Access denied"));
+      }
     }
 
     const { amount, reference } = req.body;
+
     const entity = await recordPaymentService(id, amount, reference);
     res.json({ data: entity });
   } catch (err) {
@@ -135,3 +139,27 @@ export const getStats = async (req: Request, res: Response, next: NextFunction) 
     next(err);
   }
 };
+
+/**
+ * Public Get By ID - For QR code access
+ * Does NOT require authentication
+ */
+export const getPublicById = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+
+    // We only return a subset of fields for public view
+    const entity = await RequestModel.findById(id).select(
+      "id customer_name customer_phone customer_email device_brand device_model status " +
+      "request_date total_cost deposit_paid balance payment_completed problem_description " +
+      "repair_timeline accessories_received operating_system serial_number technician_name"
+    );
+
+    if (!entity) return next(new ApiError(404, "Request not found"));
+
+    res.json({ data: (entity as any).toJSON() });
+  } catch (err) {
+    next(err);
+  }
+};
+

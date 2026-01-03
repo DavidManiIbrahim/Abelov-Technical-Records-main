@@ -4,8 +4,14 @@ import { authenticate } from "../middlewares/auth";
 
 const router = Router();
 
-// Apply authentication middleware to all routes
+// Public routes (No authentication required)
+router.get("/public/:id", ctrl.getPublicById);
+router.post("/public/:id/payment", ctrl.recordPayment);
+
+// Apply authentication middleware to all subsequent routes
 router.use(authenticate);
+
+
 
 router.get("/", ctrl.getAll);
 router.post("/", ctrl.create);
