@@ -57,30 +57,14 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 };
 
 /**
- * Me - Fetch current user from HTTP-only cookie
- * Called by frontend AuthContext on app load to restore session
- * Returns full user object including roles
+ * Me - Fetch current user
+ * Returns full user object from req.user (attached by authenticate middleware)
  */
 export const me = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let token: string | null = null;
-    const cookies = req.cookies as Record<string, string>;
-    if (cookies.token) {
-      token = cookies.token;
-    } else {
-      const auth = req.headers.authorization || "";
-      const parts = auth.split(" ");
-      if (parts.length === 2 && parts[0] === "Bearer") {
-        token = parts[1];
-      }
-    }
-    if (!token) throw new ApiError(401, "Unauthorized");
-    const payload = verifyToken(token);
-    if (!payload || typeof payload.sub !== "string") throw new ApiError(401, "Unauthorized");
-    const doc = await UserModel.findById(payload.sub);
-    if (!doc) throw new ApiError(401, "Unauthorized");
-    const user = doc.toJSON() as any;
-    res.json({ user });
+    const user = (req as any).user;
+    if (!user) throw new ApiError(401, "Unauthorized");
+    res.json({ user: user.toJSON() });
   } catch (err) {
     next(err);
   }
@@ -108,34 +92,18 @@ export const logout = async (req: Request, res: Response, next: NextFunction) =>
  */
 export const updateProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    let token: string | null = null;
-    const cookies = req.cookies as Record<string, string>;
-    if (cookies.token) {
-      token = cookies.token;
-    } else {
-      const auth = req.headers.authorization || "";
-      const parts = auth.split(" ");
-      if (parts.length === 2 && parts[0] === "Bearer") {
-        token = parts[1];
-      }
-    }
-
-    if (!token) throw new ApiError(401, "Unauthorized");
-
-    const payload = verifyToken(token);
-    if (!payload || typeof payload.sub !== "string") throw new ApiError(401, "Unauthorized");
+    const userRequest = (req as any).user;
+    if (!userRequest) throw new ApiError(401, "Unauthorized");
 
     const { username, profile_image } = req.body;
 
-    // Validate inputs if necessary
-
     const user = await UserModel.findByIdAndUpdate(
-      payload.sub,
+      userRequest.id,
       {
         ...(username !== undefined && { username }),
         ...(profile_image !== undefined && { profile_image })
       },
-      { new: true } // Return updated document
+      { new: true }
     );
 
     if (!user) throw new ApiError(404, "User not found");

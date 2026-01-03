@@ -111,6 +111,9 @@ export default function ProfileMenu() {
       if (remoteUsername) {
         setUsername(remoteUsername);
         setOriginalUsername(remoteUsername);
+      } else {
+        setUsername('');
+        setOriginalUsername('');
       }
     }
   }, [user]);

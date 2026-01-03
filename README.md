@@ -236,14 +236,16 @@ serviceRequestAPI.getStats(userId: string)
 
 ## Authentication
 
-- Development: local login/signup with `localStorage`
-- Future: enable JWT-based auth and role checks in the backend
+- **JWT Auth**: Secure HTTP-only cookies for session management
+- **Protected Routes**: Backend middleware verifies tokens for all request operations
+- **Role-based Access**: Foundation laid for user/admin roles
 
 ## Security & Best Practices
 
 - **Helmet**: secure HTTP headers
 - **CORS**: restricted origins (configurable)
 - **Rate Limiting**: applied to `/api/*`
+- **Authentication**: JWT-based protection for all critical API endpoints
 - **Compression**: gzip responses
 - **Logging**: structured logs with `pino`
 - **Input Validation**: Zod schemas for payloads
@@ -347,6 +349,8 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - ✅ Frontend now calls REST API (`VITE_API_BASE_URL`)
 - ✅ Simplified dev auth with local storage
 - ✅ Unit & integration tests for backend
+- ✅ **Security Hardening**: Applied JWT authentication middleware to all service request and admin endpoints to prevent unauthorized access.
+- ✅ **RBAC**: Implemented Role-Based Access Control to restrict sensitive admin operations.
 
 ### v2.0.0
 - ✅ Supabase backend integration and authentication

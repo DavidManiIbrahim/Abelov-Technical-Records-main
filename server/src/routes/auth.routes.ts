@@ -1,6 +1,7 @@
 import { Router } from "express";
 import cors from "cors";
 import * as ctrl from "../controllers/auth.controller";
+import { authenticate } from "../middlewares/auth";
 
 const router = Router();
 
@@ -8,6 +9,7 @@ const router = Router();
 const allowedOrigins = [
   // Production frontend (Render deployment)
   "https://abelov-technical-records-main.onrender.com",
+  "https://abelov-technical-records.onrender.com",
   // Development frontend
   "http://localhost:8080",
   "http://localhost:8081",
@@ -47,11 +49,9 @@ router.use(cors(corsOptions));
 router.post("/signup", ctrl.signup);
 router.post("/login", ctrl.login);
 router.post("/logout", ctrl.logout);
-router.post("/logout", ctrl.logout);
-router.options("/me", cors(corsOptions)); // Handle preflight explicitly
-router.get("/me", ctrl.me);
 
-router.options("/profile", cors(corsOptions));
-router.put("/profile", ctrl.updateProfile);
+// Protected routes
+router.get("/me", authenticate, ctrl.me);
+router.put("/profile", authenticate, ctrl.updateProfile);
 
 export default router;
