@@ -1,10 +1,9 @@
 import mongoose from "mongoose";
-import { MongoMemoryServer } from "mongodb-memory-server";
 import { env } from "../config/env";
 import { logger } from "../middlewares/logger";
 
 let isConnected = false;
-let mongod: MongoMemoryServer | null = null;
+let mongod: any = null;
 
 export const connectMongo = async () => {
   if (isConnected) return;
@@ -26,6 +25,7 @@ export const connectMongo = async () => {
     if (env.NODE_ENV === "development" || env.NODE_ENV === "test") {
       logger.info("Falling back to in-memory MongoDB...");
       try {
+        const { MongoMemoryServer } = await import("mongodb-memory-server");
         mongod = await MongoMemoryServer.create();
         const uri = mongod.getUri();
         await mongoose.connect(uri, {
