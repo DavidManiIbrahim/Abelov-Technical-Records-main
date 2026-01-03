@@ -152,7 +152,8 @@ export const getPublicById = async (req: Request, res: Response, next: NextFunct
     const entity = await RequestModel.findById(id).select(
       "id customer_name customer_phone customer_email device_brand device_model status " +
       "request_date total_cost deposit_paid balance payment_completed problem_description " +
-      "repair_timeline accessories_received operating_system serial_number technician_name"
+      "repair_timeline accessories_received operating_system serial_number technician_name " +
+      "service_charge parts_cost created_at updated_at"
     );
 
     if (!entity) return next(new ApiError(404, "Request not found"));

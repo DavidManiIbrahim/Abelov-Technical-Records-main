@@ -54,11 +54,12 @@ const PaymentSection = ({ request, onPaymentSuccess }: { request: ServiceRequest
         className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white"
       >
         <CreditCard className="w-4 h-4 mr-2" />
-        Pay Balance (₦{request.balance.toLocaleString()})
+        Pay Balance (₦{(request.balance || 0).toLocaleString()})
       </Button>
     </div>
   );
 };
+
 
 export default function ServiceRequestViewPage() {
   const { id } = useParams<{ id: string }>();
@@ -72,17 +73,19 @@ export default function ServiceRequestViewPage() {
     try {
       const data = await serviceRequestAPI.getById(requestId);
       setRequest(data);
-    } catch {
+    } catch (err: any) {
+      console.error('Request load failed:', err);
       toast({
         title: 'Error',
-        description: 'Failed to load request',
+        description: err.message || 'Failed to load request',
         variant: 'destructive',
       });
-      navigate('/dashboard');
+      // Don't navigate away; the UI handles !request state with a clear message
     } finally {
       setLoading(false);
     }
-  }, [navigate]);
+  }, []);
+
 
   useEffect(() => {
     if (id) {
@@ -103,9 +106,10 @@ export default function ServiceRequestViewPage() {
       <div className="flex items-center justify-center min-h-screen">
         <Card className="p-8 text-center">
           <h1 className="text-2xl font-bold mb-4">Request Not Found</h1>
-          <Button onClick={() => navigate('/dashboard')}>Go Back</Button>
+          <Button onClick={() => navigate('/login')}>Return to Login</Button>
         </Card>
       </div>
+
     );
   }
 
@@ -240,9 +244,10 @@ export default function ServiceRequestViewPage() {
             <img src={abelovLogo} alt="Abelov Logo" className="w-16 h-16" />
             <div>
               <h1 className="text-4xl font-bold text-primary mb-2">Service Request Details</h1>
-              <p className="text-muted-foreground">Request ID: {request.id}</p>
+              <p className="text-muted-foreground">Request ID: {request?.id || '-'}</p>
             </div>
           </div>
+
           <div className="flex gap-2 print-hide">
             {/* Only show action buttons if logged in */}
             {user && (
@@ -288,7 +293,7 @@ export default function ServiceRequestViewPage() {
                   <DetailRow label="Request ID" value={request.id} />
                 </div>
                 <div>
-                  <DetailRow label="Request Date" value={new Date(request.request_date).toLocaleDateString()} />
+                  <DetailRow label="Request Date" value={request.request_date ? new Date(request.request_date).toLocaleDateString() : '-'} />
                 </div>
                 <div>
                   <DetailRow label="Status" value={request.status} />
@@ -352,7 +357,7 @@ export default function ServiceRequestViewPage() {
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   {request.diagnosis_date && (
                     <div>
-                      <DetailRow label="Diagnosis Date" value={new Date(request.diagnosis_date).toLocaleDateString()} />
+                      <DetailRow label="Diagnosis Date" value={request.diagnosis_date ? new Date(request.diagnosis_date).toLocaleDateString() : '-'} />
                     </div>
                   )}
                   {request.diagnosis_technician && (
@@ -387,23 +392,24 @@ export default function ServiceRequestViewPage() {
               <h3 className="text-lg font-semibold mb-3 text-primary">Costs</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <DetailRow label="Service" value={`₦${request.service_charge.toLocaleString()}`} />
+                  <DetailRow label="Service" value={`₦${(request.service_charge || 0).toLocaleString()}`} />
                 </div>
                 <div>
-                  <DetailRow label="Parts" value={`₦${request.parts_cost.toLocaleString()}`} />
+                  <DetailRow label="Parts" value={`₦${(request.parts_cost || 0).toLocaleString()}`} />
                 </div>
                 <div>
-                  <DetailRow label="Total" value={`₦${request.total_cost.toLocaleString()}`} />
+                  <DetailRow label="Total" value={`₦${(request.total_cost || 0).toLocaleString()}`} />
                 </div>
                 <div>
-                  <DetailRow label="Deposit" value={`₦${request.deposit_paid.toLocaleString()}`} />
+                  <DetailRow label="Deposit" value={`₦${(request.deposit_paid || 0).toLocaleString()}`} />
                 </div>
                 <div>
-                  <DetailRow label="Balance" value={`₦${request.balance.toLocaleString()}`} />
+                  <DetailRow label="Balance" value={`₦${(request.balance || 0).toLocaleString()}`} />
                 </div>
                 <div>
                   <DetailRow label="Payment" value={request.payment_completed ? 'Completed' : 'Pending'} />
                 </div>
+
               </div>
             </div>
 
@@ -424,8 +430,8 @@ export default function ServiceRequestViewPage() {
 
             {/* Timestamps - Hide on Print */}
             <div className="print-hide text-xs text-muted-foreground mt-6 pt-4 border-t">
-              <p>Created: {new Date(request.created_at).toLocaleString()}</p>
-              <p>Last Updated: {new Date(request.updated_at).toLocaleString()}</p>
+              <p>Created: {request.created_at ? new Date(request.created_at).toLocaleString() : '-'}</p>
+              <p>Last Updated: {request.updated_at ? new Date(request.updated_at).toLocaleString() : '-'}</p>
             </div>
 
             {/* Payment Section - always visible logic */}
@@ -462,9 +468,10 @@ export default function ServiceRequestViewPage() {
               <div className="flex flex-col items-center">
                 <p className="text-xs text-muted-foreground mb-2">Service Request QR Code</p>
                 <QRCode
-                  value={`https://abelov-technical-records-main.onrender.com/#/view/${request.id}`}
+                  value={`${window.location.origin}/#/view/${request.id}`}
                   size={128}
                 />
+
               </div>
             </div>
           </Card>

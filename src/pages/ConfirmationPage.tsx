@@ -50,7 +50,7 @@ export default function ConfirmationPage() {
 
       const imgWidth = 210;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
+
       pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
       pdf.save(`service-request-${request?.id}.pdf`);
 
@@ -96,7 +96,7 @@ export default function ConfirmationPage() {
             Export PDF
           </Button>
         </div>
-        
+
         <Card className="p-8" ref={printRef}>
           <div className="text-center mb-8">
             <CheckCircle className="w-16 h-16 text-primary mx-auto mb-4" />
@@ -134,24 +134,25 @@ export default function ConfirmationPage() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Service Charge:</span>
-                <span className="font-medium">${request.service_charge.toLocaleString()}</span>
+                <span className="font-medium">₦{(request.service_charge || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Parts Cost:</span>
-                <span className="font-medium">${request.parts_cost.toLocaleString()}</span>
+                <span className="font-medium">₦{(request.parts_cost || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between border-t pt-2">
                 <span className="font-semibold">Total Cost:</span>
-                <span className="font-bold text-primary">${request.total_cost.toLocaleString()}</span>
+                <span className="font-bold text-primary">₦{(request.total_cost || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Deposit Paid:</span>
-                <span className="font-medium">${request.deposit_paid.toLocaleString()}</span>
+                <span className="font-medium">₦{(request.deposit_paid || 0).toLocaleString()}</span>
               </div>
               <div className="flex justify-between border-t pt-2">
                 <span className="font-semibold">Balance Due:</span>
-                <span className="font-bold text-destructive">${request.balance.toLocaleString()}</span>
+                <span className="font-bold text-destructive">₦{(request.balance || 0).toLocaleString()}</span>
               </div>
+
               <div className="flex justify-between items-center pt-2">
                 <span className="text-muted-foreground">Payment Status:</span>
                 <span className={`font-medium ${request.payment_completed ? 'text-green-600' : 'text-orange-600'}`}>
