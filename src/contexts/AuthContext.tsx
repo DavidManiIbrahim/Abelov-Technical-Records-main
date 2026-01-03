@@ -3,7 +3,13 @@ import { authAPI } from '@/lib/api';
 import { persistentState } from '@/utils/storage';
 
 type Session = { user: { id: string; email: string; roles?: string[] } } | null;
-type User = { id: string; email: string; roles?: string[] } | null;
+type User = { 
+  id: string; 
+  email: string; 
+  roles?: string[];
+  username?: string;
+  profile_image?: string;
+} | null;
 
 interface AuthContextType {
   session: Session | null;
@@ -14,6 +20,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, userType?: 'user' | 'admin') => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
+  updateUser: (updates: Partial<NonNullable<User>>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -39,6 +46,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.warn('Failed to save session to localStorage:', error);
     }
   }, []);
+
+  // Update local user state manually (e.g. after profile update)
+  const updateUser = useCallback((updates: Partial<NonNullable<User>>) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...updates };
+    setUser(updatedUser);
+    
+    // Update localStorage
+    try {
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(updatedUser));
+    } catch (error) {
+      console.warn('Failed to update user in localStorage:', error);
+    }
+  }, [user]);
 
   // Load session data from localStorage
   const loadSessionFromStorage = useCallback(() => {
@@ -91,7 +112,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (me && me.id && isMounted) {
             const roles = (me.roles as string[]) || [];
             const sessionData = { user: { id: me.id, email: me.email, roles } };
-            const userData = { id: me.id, email: me.email, roles };
+            const userData = { 
+              id: me.id, 
+              email: me.email, 
+              roles,
+              username: me.username,
+              profile_image: me.profile_image
+            };
 
             setSession(sessionData);
             setUser(userData);
@@ -167,7 +194,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       const roles = (result.roles as string[]) || [];
       const sessionData = { user: { id: result.id, email: result.email, roles } };
-      const userData = { id: result.id, email: result.email, roles };
+      const userData = { 
+        id: result.id, 
+        email: result.email, 
+        roles,
+        username: result.username,
+        profile_image: result.profile_image
+      };
 
       setSession(sessionData);
       setUser(userData);
@@ -212,7 +245,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       isAdmin: userRoles.includes('admin'),
       signUp,
       signIn,
-      signOut
+      signOut,
+      updateUser
     }}>
       {children}
     </AuthContext.Provider>

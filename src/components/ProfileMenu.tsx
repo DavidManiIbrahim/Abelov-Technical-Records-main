@@ -8,7 +8,7 @@ import { Card } from '@/components/ui/card';
 import { LogOut, Upload, X } from 'lucide-react';
 
 export default function ProfileMenu() {
-  const { user, signOut } = useAuth();
+  const { user, signOut, updateUser } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -53,8 +53,6 @@ export default function ProfileMenu() {
         const base64 = e.target?.result as string;
         setProfileImage(base64);
         setHasChanges(true); // Enable save button
-        // Save to localStorage for persistence
-        localStorage.setItem('userProfileImage', base64);
       };
       reader.readAsDataURL(file);
     } catch (error) {
@@ -79,17 +77,15 @@ export default function ProfileMenu() {
         ...(profileImage && { profile_image: profileImage })
       }));
 
-      // Update localStorage for immediate feedback
-      localStorage.setItem('userUsername', username);
-      if (profileImage) {
-        localStorage.setItem('userProfileImage', profileImage);
-      }
+      // Update AuthContext
+      updateUser({
+        username: updatedUser.username,
+        profile_image: updatedUser.profile_image
+      });
 
       setOriginalUsername(username);
       setHasChanges(false);
 
-      // Update persistent session storage if needed
-      // Ideally AuthContext should be updated here
       alert('Profile updated successfully');
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -102,21 +98,21 @@ export default function ProfileMenu() {
     await signOut();
   };
 
-  // Load profile image and username from localStorage or User object on mount
+  // Load profile image and username from User object on mount/update
   useEffect(() => {
-    // @ts-ignore
-    const remoteImage = user?.profile_image;
-    // @ts-ignore
-    const remoteUsername = user?.username;
+    if (user) {
+      const remoteImage = user.profile_image;
+      const remoteUsername = user.username;
 
-    const savedImage = remoteImage || localStorage.getItem('userProfileImage');
-    if (savedImage) {
-      setProfileImage(savedImage);
+      if (remoteImage) {
+        setProfileImage(remoteImage);
+      }
+      
+      if (remoteUsername) {
+        setUsername(remoteUsername);
+        setOriginalUsername(remoteUsername);
+      }
     }
-
-    const savedUsername = remoteUsername || localStorage.getItem('userUsername') || '';
-    setUsername(savedUsername);
-    setOriginalUsername(savedUsername);
   }, [user]);
 
   return (

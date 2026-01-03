@@ -17,7 +17,6 @@ export default function DashboardPage() {
   const { user, isAdmin } = useAuth();
 
   const getUsername = () => {
-    // @ts-ignore
     return user?.username || localStorage.getItem('userUsername') || '';
   };
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
