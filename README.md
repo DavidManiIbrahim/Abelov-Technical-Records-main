@@ -349,8 +349,13 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 - ✅ Frontend now calls REST API (`VITE_API_BASE_URL`)
 - ✅ Simplified dev auth with local storage
 - ✅ Unit & integration tests for backend
-- ✅ **Security Hardening**: Applied JWT authentication middleware to all service request and admin endpoints to prevent unauthorized access.
-- ✅ **RBAC**: Implemented Role-Based Access Control to restrict sensitive admin operations.
+- ✅ **Security Hardening**: 
+  - Applied JWT authentication middleware to all service request and admin endpoints.
+  - **NoSQL Injection**: Added `express-mongo-sanitize` and strict Zod validation to prevent exploitation via MongoDB operators.
+  - **Mass Assignment**: Disabled schema passthrough and whitelisted fields in controllers (e.g., `role` removed from public signup).
+  - **Race Conditions**: Implemented MongoDB unique indexes and handle duplicate key errors (11000) gracefully.
+  - **Password Policy**: Increased password complexity requirements (8+ chars, upper, lower, number, special).
+  - **Role Management**: Protected admin routes with RBAC middleware; public signup forced to `user` role.
 
 ### v2.0.0
 - ✅ Supabase backend integration and authentication

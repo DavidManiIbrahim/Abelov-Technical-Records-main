@@ -10,19 +10,18 @@ import { hashPassword, verifyPassword, createToken, verifyToken } from "../utils
  */
 export const signup = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password, role } = SignupSchema.parse(req.body);
+    const { email, password } = SignupSchema.parse(req.body);
     const exists = await UserModel.findOne({ email });
     if (exists) throw new ApiError(409, "Email already registered");
     const { salt, hash } = hashPassword(password);
     const doc = await UserModel.create({
       email,
-      roles: role ? [role] : ['user'],
+      roles: ['user'], // Strictly force user role
       is_active: true,
       password_hash: hash,
       password_salt: salt
     } as any);
     const user = doc.toJSON() as any;
-    // Return user WITHOUT token (client must login separately)
     res.status(201).json({ user });
   } catch (err) {
     next(err);

@@ -29,7 +29,7 @@ export const RequestSchema = z.object({
   balance: z.coerce.number().nonnegative().optional().default(0),
   payment_completed: z.coerce.boolean().optional().default(false),
   user_id: z.string().optional(),
-}).passthrough();
+});
 
 export const RequestUpdateSchema = RequestSchema.partial();
 

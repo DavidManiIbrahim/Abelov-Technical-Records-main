@@ -1,5 +1,6 @@
 import express from "express";
 import cookieParser from "cookie-parser";
+import mongoSanitize from "express-mongo-sanitize";
 import cors from "cors";
 import helmet from "helmet";
 import compression from "compression";
@@ -21,16 +22,23 @@ export const createApp = () => {
   app.use(httpLogger);
   app.use(helmet());
 
+  // NoSQL Injection Protection
+  app.use(mongoSanitize());
+
   // Production-ready CORS configuration
   const allowedOrigins = [
-    // Production frontend (Render deployment)
+    // Production frontend
     "https://abelov-technical-records-main.onrender.com",
     "https://abelov-technical-records.onrender.com",
+    "https://abelov-technical-records-frontend.onrender.com",
+    "https://abelov-technical-records-backend.onrender.com",
+    "https://abelov-technical-records-api.onrender.com",
     // Development frontend
     "http://localhost:8080",
     "http://localhost:8081",
     "http://localhost:3000",
     "http://localhost:5173",
+    "http://localhost:4173",
   ];
 
   // CORS middleware with proper credentials handling
@@ -75,7 +83,6 @@ export const createApp = () => {
       (process.env.NODE_ENV !== 'production' && origin.includes('localhost'));
 
     if (isAllowed) {
-      // Only set origin header if we have a specific origin
       if (origin) {
         res.header('Access-Control-Allow-Origin', origin);
       }
@@ -87,10 +94,11 @@ export const createApp = () => {
       res.sendStatus(403);
     }
   });
+
   app.use(compression());
   app.use(cookieParser());
-  app.use(express.json({ limit: "10mb" }));
-  app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+  app.use(express.json({ limit: "1mb" })); // Reduced limit for better security
+  app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", uptime: process.uptime(), version: "1.0.0", db: mongoState() });
