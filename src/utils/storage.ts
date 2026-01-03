@@ -6,7 +6,7 @@
 // Memory cache utilities (original implementation)
 // Persistent cache utilities (localStorage implementation)
 const CACHE_PREFIX = 'abelov_api_cache_';
-const DEFAULT_TTL = 60 * 60 * 1000; // 1 hour
+const DEFAULT_TTL = 30 * 1000; // 30 seconds (reduced from 1 hour for freshness)
 
 export function getCache<T>(key: string): T | null {
   try {

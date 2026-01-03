@@ -12,9 +12,9 @@ const getApiBase = () => {
   // This ensures that even a production build running locally uses local backend
   // and prevents deployed app from trying to hit localhost
   if (typeof window !== 'undefined') {
-    const isLocal = window.location.hostname === 'localhost' || 
-                    window.location.hostname === '127.0.0.1' ||
-                    window.location.hostname.includes('192.168.');
+    const isLocal = window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.includes('192.168.');
     if (isLocal) {
       return 'http://localhost:4000/api/v1';
     }
@@ -71,22 +71,27 @@ export const serviceRequestAPI = {
     }
     invalidateCache('admin_requests');
     invalidateCache('admin_global_stats');
+    invalidateCache('service_requests');
     return record;
   },
 
-  async getById(id: string) {
-    const cached = getCache<ServiceRequest | null>(`service_request:${id}`);
-    if (cached) return cached;
+  async getById(id: string, forceRefresh = false) {
+    if (!forceRefresh) {
+      const cached = getCache<ServiceRequest | null>(`service_request:${id}`);
+      if (cached) return cached;
+    }
     const res = await apiFetch(`/requests/${id}`);
     const record = (res?.data || res) as ServiceRequest;
     setCache<ServiceRequest>(`service_request:${id}`, record);
     return record;
   },
 
-  async getByUserId(userId: string) {
+  async getByUserId(userId: string, forceRefresh = false) {
     const key = `service_requests:${userId}`;
-    const cached = getCache<ServiceRequest[]>(key);
-    if (cached) return cached;
+    if (!forceRefresh) {
+      const cached = getCache<ServiceRequest[]>(key);
+      if (cached) return cached;
+    }
     const res = await apiFetch(`/requests?user_id=${userId}`);
     const list = (res?.data || res) as ServiceRequest[];
     setCache<ServiceRequest[]>(key, list);
@@ -106,6 +111,7 @@ export const serviceRequestAPI = {
     }
     invalidateCache('admin_requests');
     invalidateCache('admin_global_stats');
+    invalidateCache('service_requests');
     return record;
   },
 
@@ -114,8 +120,7 @@ export const serviceRequestAPI = {
     invalidateCache(`service_request:${id}`);
     invalidateCache('admin_requests');
     invalidateCache('admin_global_stats');
-    // Invalidate all related service request and stats caches
-    // Note: We rely on explicit cache invalidation in the calling code
+    invalidateCache('service_requests'); // Invalidate all list caches
   },
 
   async search(userId: string, query: string) {
@@ -130,10 +135,12 @@ export const serviceRequestAPI = {
     return list;
   },
 
-  async getStats(userId: string) {
+  async getStats(userId: string, forceRefresh = false) {
     const key = `stats:${userId}`;
-    const cached = getCache<{ total: number; completed: number; pending: number; inProgress: number; totalRevenue: number }>(key);
-    if (cached) return cached;
+    if (!forceRefresh) {
+      const cached = getCache<{ total: number; completed: number; pending: number; inProgress: number; totalRevenue: number }>(key);
+      if (cached) return cached;
+    }
     const res = await apiFetch(`/requests/stats/${userId}`);
     const stats = res?.data || res;
     setCache(key, stats);
@@ -153,6 +160,7 @@ export const serviceRequestAPI = {
     }
     invalidateCache('admin_requests');
     invalidateCache('admin_global_stats');
+    invalidateCache('service_requests');
     return record;
   },
 };
@@ -165,10 +173,12 @@ export const adminAPI = {
     return (res?.data || res) as unknown[];
   },
 
-  async getAllServiceRequests(limit = 100, offset = 0) {
+  async getAllServiceRequests(limit = 100, offset = 0, forceRefresh = false) {
     const key = `admin_requests_limit=${limit}_offset=${offset}`;
-    const cached = getCache<{ requests: ServiceRequest[]; total: number }>(key);
-    if (cached) return cached;
+    if (!forceRefresh) {
+      const cached = getCache<{ requests: ServiceRequest[]; total: number }>(key);
+      if (cached) return cached;
+    }
 
     const res = await apiFetch(`/admin/requests?limit=${limit}&offset=${offset}`);
     const result = {
@@ -195,17 +205,20 @@ export const adminAPI = {
     };
   },
 
-  async getGlobalStats() {
-    const cached = getCache<{
-      totalUsers: number;
-      totalTickets: number;
-      pendingTickets: number;
-      completedTickets: number;
-      inProgressTickets: number;
-      onHoldTickets: number;
-      totalRevenue: number;
-    }>('admin_global_stats');
-    if (cached) return cached;
+  async getGlobalStats(forceRefresh = false) {
+    const key = 'admin_global_stats';
+    if (!forceRefresh) {
+      const cached = getCache<{
+        totalUsers: number;
+        totalTickets: number;
+        pendingTickets: number;
+        completedTickets: number;
+        inProgressTickets: number;
+        onHoldTickets: number;
+        totalRevenue: number;
+      }>(key);
+      if (cached) return cached;
+    }
 
     const res = await apiFetch('/admin/stats');
     const stats = res as {
@@ -217,7 +230,7 @@ export const adminAPI = {
       onHoldTickets: number;
       totalRevenue: number;
     };
-    setCache('admin_global_stats', stats);
+    setCache(key, stats);
     return stats;
   },
 

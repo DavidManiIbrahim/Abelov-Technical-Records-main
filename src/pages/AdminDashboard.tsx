@@ -74,9 +74,9 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const [stats, usersData, requestsData] = await Promise.all([
-        adminAPI.getGlobalStats(),
+        adminAPI.getGlobalStats(true), // Force refresh
         adminAPI.getAllUsersWithStats(),
-        adminAPI.getAllServiceRequests(20, 0),
+        adminAPI.getAllServiceRequests(20, 0, true), // Force refresh
       ]);
 
       setGlobalStats(stats as GlobalStats);
@@ -193,11 +193,11 @@ export default function AdminDashboard() {
       <div className="border-b bg-card p-4 md:p-6">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className='flex items-center gap-4'>
-          <img src={abelovLogo} alt="Abelov Logo" className="w-12 rounded-3xl h-12" />
-          <div>
-            <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
-            <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
-          </div>
+            <img src={abelovLogo} alt="Abelov Logo" className="w-12 rounded-3xl h-12" />
+            <div>
+              <h1 className="text-3xl font-bold text-primary">Admin Dashboard</h1>
+              <p className="text-sm text-muted-foreground mt-1">{user?.email}</p>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => navigate('/dashboard')} variant="outline" className="md:flex hidden">
@@ -309,7 +309,7 @@ export default function AdminDashboard() {
                   </div>
                   <p className="text-3xl font-bold text-emerald-700">₦{(globalStats.totalRevenue || 0).toLocaleString()}</p>
                   <p className="text-xs text-gray-500">Total earnings</p>
-                 
+
                 </div>
               </Card>
             </div>

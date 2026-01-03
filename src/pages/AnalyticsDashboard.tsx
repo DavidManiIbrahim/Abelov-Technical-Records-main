@@ -19,7 +19,7 @@ export default function AnalyticsDashboard() {
     if (!user?.id) return;
     setLoading(true);
     try {
-      const data = await serviceRequestAPI.getByUserId(user.id);
+      const data = await serviceRequestAPI.getByUserId(user.id, true); // Force refresh
       setRequests(data || []);
     } catch (error) {
       console.error('Error loading data:', error);

@@ -37,8 +37,8 @@ export default function DashboardPage() {
     setLoading(true);
     try {
       const [data, statsData] = await Promise.all([
-        adminAPI.getAllServiceRequests(100, 0), // Get all requests instead of just user's
-        adminAPI.getGlobalStats(),
+        adminAPI.getAllServiceRequests(100, 0, true), // Force refresh on load
+        adminAPI.getGlobalStats(true), // Force refresh on load
       ]);
       setRequests(data.requests || []);
       setFilteredRequests(data.requests || []);
